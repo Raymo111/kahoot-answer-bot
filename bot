@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+import grab
+
+answers = grab.scrape("0c17fb60-76c6-424c-9326-d1154cbc70d3")
+print(answers)
+
+grab.start_bot(922348,"mr.bot",answers)
