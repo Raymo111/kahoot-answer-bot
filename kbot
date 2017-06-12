@@ -6,7 +6,7 @@ USAGE = '''
 kbot GAMEID (GAMEPIN) (USERNAME)
 '''
 EMAIL = "kahootbot27@gmail.com"
-PASSWORD = "appropriatesigmajamiemonkeyalongheat"
+PASSWORD = "appropriatesigma"
 name = "jimmy"
 if len(sys.argv) == 4:
     name = sys.argv[3]
