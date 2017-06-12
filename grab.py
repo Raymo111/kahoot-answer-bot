@@ -9,7 +9,7 @@ def get_page(id):
     box = driver.find_element_by_css_selector('#username-input-field__input')
     box.send_keys('peter.a.stenger@gmail.com')
     box2 = driver.find_element_by_css_selector('#password-input-field__input')
-    box2.send_keys('NOPASSWDFORU')
+    box2.send_keys('retep2170')
     driver.find_element_by_css_selector('.button--cta-play').click()
     time.sleep(2)
     elem = driver.find_element_by_xpath("//*")
@@ -32,17 +32,25 @@ def start_bot(id,name,answers):
 
 
 def bot_answer(driver,answers):
-    lookuptable = {"0":"#answerA", "1":"#answerB","2":"#answerC","3":"#answerD"}
+    lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
+    nextQ = False
+    answered = False
     for i in range(len(answers)):
         while True:
             try:
-                driver.find_element_by_css_selector("#answer-screen")
-                driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
-                break
-            except selenium.common.exceptions.NoSuchElementException:
-                pass
-                #lol
-            sleep(0.01)
+                driver.find_element_by_css_selector(".answer-screen")
+                if not answered:
+                    print(lookuptable[answers[i]], answers[i])
+                    driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
+                    answered = True
+            except Exception as e:
+                nextQ = True
+                if nextQ and answered:
+                    nextQ = False
+                    answered = False
+                    break
+            time.sleep(0.01)
+        print(i)
     driver.quit()
 
 def getQuestions(soup):
@@ -81,5 +89,5 @@ def printAnswers(url):
 def scrape(url):
     html = get_page(url)
     soup = BeautifulSoup(html, 'html.parser')
-    answers, _ = getAnswers(soup,hascolor=False)
+    answers, asd = getAnswers(soup,hascolor=False)
     return answers
