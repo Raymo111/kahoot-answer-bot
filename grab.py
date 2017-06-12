@@ -9,7 +9,7 @@ def get_page(id):
     box = driver.find_element_by_css_selector('#username-input-field__input')
     box.send_keys('peter.a.stenger@gmail.com')
     box2 = driver.find_element_by_css_selector('#password-input-field__input')
-    box2.send_keys('retep2170')
+    box2.send_keys('NOPASSWDFORU')
     driver.find_element_by_css_selector('.button--cta-play').click()
     time.sleep(2)
     elem = driver.find_element_by_xpath("//*")
