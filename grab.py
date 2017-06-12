@@ -3,13 +3,13 @@ import sys
 from bs4 import BeautifulSoup
 import time
 from selenium import webdriver
-def get_page(id):
+def get_page(id, email, passwd):
     driver = webdriver.Chrome()
     driver.get('https://create.kahoot.it/#quiz/' + id);
     box = driver.find_element_by_css_selector('#username-input-field__input')
-    box.send_keys('peter.a.stenger@gmail.com')
+    box.send_keys(email)
     box2 = driver.find_element_by_css_selector('#password-input-field__input')
-    box2.send_keys('retep2170')
+    box2.send_keys(passwd)
     driver.find_element_by_css_selector('.button--cta-play').click()
     time.sleep(2)
     elem = driver.find_element_by_xpath("//*")
@@ -79,16 +79,16 @@ def getAnswers(soup,hascolor=True):
                 colors.append(num)
 
     return colors, answers
-def printAnswers(url):
-    html = get_page(url)
+def printAnswers(url,email,passwd):
+    html = get_page(url,email,passwd)
     soup = BeautifulSoup(html, 'html.parser')
     questions = getQuestions(soup)
     colors, answers = getAnswers(soup)
     for i in range(len(questions)):
         print("\n" + questions[i])
         print(answers[i] + "  " + colors[i])
-def scrape(url):
-    html = get_page(url)
+def scrape(url,email,passwd):
+    html = get_page(url,email,passwd)
     soup = BeautifulSoup(html, 'html.parser')
     answers, asd = getAnswers(soup,hascolor=False)
     return answers
