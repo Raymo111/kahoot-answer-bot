@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-import sys
+
+#-------------------------------------------------------------------------#
+#written by Peter Stenger (@reteps) with support from Ryan Densmore (@rydens)
+#If you use this code, please cite us / this page.
+#-------------------------------------------------------------------------#
+import sys, time
 from bs4 import BeautifulSoup
-import time
 from selenium import webdriver
+#-------------------------------------------------------------------------#
 def get_page(id, email, passwd):
     driver = webdriver.Chrome()
     driver.get('https://create.kahoot.it/#quiz/' + id);
@@ -16,6 +21,7 @@ def get_page(id, email, passwd):
     stuff = elem.get_attribute("innerHTML")
     driver.quit()
     return stuff
+#-------------------------------------------------------------------------#
 def start_bot(id,name,answers):
     driver = webdriver.Chrome()
     driver.get("https://kahoot.it/#/")
@@ -29,8 +35,7 @@ def start_bot(id,name,answers):
     driver.find_element_by_css_selector('.btn-greyscale').click()
     input("click [ENTER] to start the bot\n")
     bot_answer(driver,answers)
-
-
+#-------------------------------------------------------------------------#
 def bot_answer(driver,answers):
     lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
     nextQ = False
@@ -53,7 +58,7 @@ def bot_answer(driver,answers):
         print("Question " ,i+1)
     print('All done!')
     driver.quit()
-
+#-------------------------------------------------------------------------#
 def getQuestions(soup):
     questions = []
     stuff = soup.findAll("td", {"class":'question-title'})
@@ -61,7 +66,7 @@ def getQuestions(soup):
         question = qt.find("div").get_text()
         questions.append(question.strip()[:-45])
     return questions
-
+#-------------------------------------------------------------------------#
 def getAnswers(soup,hascolor=True):
 
     stuff = soup.findAll("li", {"class":'answers-list__item'})
@@ -79,16 +84,22 @@ def getAnswers(soup,hascolor=True):
                 colors.append(num)
 
     return colors, answers
-def printAnswers(url,email,passwd):
+#-------------------------------------------------------------------------#
+def printAnswers(url,email,passwd,co,co2):
     html = get_page(url,email,passwd)
     soup = BeautifulSoup(html, 'html.parser')
     questions = getQuestions(soup)
     colors, answers = getAnswers(soup)
+    print('-----------------------------------------------------------------------------------------------------------------')
+    print('|  {0}NUM{1}  |  {0}Question{1}                                         |  {0}Answer{1}                                 |  {0}Color{1}  |'.format(co,co2))
+    print('-----------------------------------------------------------------------------------------------------------------')
     for i in range(len(questions)):
-        print("\n" + questions[i])
-        print(answers[i] + "  " + colors[i])
+        print('|  {}{:03d}{}  |  {}{:49s}{}|  {}{:39s}{}|  {}{:6s}{}  |'.format(co,i,co2,co,questions[i],co2,co,answers[i],co2,co,colors[i],co2))
+        print('----------------------------------------------------------------------------------------------------------------')
+#-------------------------------------------------------------------------#
 def scrape(url,email,passwd):
     html = get_page(url,email,passwd)
     soup = BeautifulSoup(html, 'html.parser')
     answers, asd = getAnswers(soup,hascolor=False)
     return answers
+#-------------------------------------------------------------------------#
