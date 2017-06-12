@@ -38,6 +38,7 @@ def start_bot(id,name,answers):
 #-------------------------------------------------------------------------#
 def bot_answer(driver,answers):
     lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
+    lookup = {"0":"red","1":"blue","2":"yellow","3":"green"}
     nextQ = False
     answered = False
     for i in range(len(answers)):
@@ -45,7 +46,7 @@ def bot_answer(driver,answers):
             try:
                 driver.find_element_by_css_selector(".answer-screen")
                 if not answered:
-                    print("Chose" + lookuptable[answers[i]])
+                    print("Chose " + lookup[answers[i]])
                     driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
                     answered = True
             except Exception as e:
