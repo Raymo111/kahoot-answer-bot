@@ -1,9 +1,0 @@
-#!/usr/bin/env python3
-import grab
-gi = input('game id > ')
-gp = input('game pin > ')
-print(gi)
-answers = grab.scrape(gi)
-print(answers)
-
-grab.start_bot(gp,"mr.bot",answers)

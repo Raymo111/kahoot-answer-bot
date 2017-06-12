@@ -27,7 +27,7 @@ def start_bot(id,name,answers):
     box = driver.find_element_by_css_selector('#username')
     box.send_keys(name)
     driver.find_element_by_css_selector('.btn-greyscale').click()
-    input("game start")
+    input("click [ENTER] to start the bot\n")
     bot_answer(driver,answers)
 
 
@@ -40,7 +40,7 @@ def bot_answer(driver,answers):
             try:
                 driver.find_element_by_css_selector(".answer-screen")
                 if not answered:
-                    print(lookuptable[answers[i]], answers[i])
+                    print("Chose" + lookuptable[answers[i]])
                     driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
                     answered = True
             except Exception as e:
@@ -50,7 +50,8 @@ def bot_answer(driver,answers):
                     answered = False
                     break
             time.sleep(0.01)
-        print(i)
+        print("Question " ,i+1)
+    print('All done!')
     driver.quit()
 
 def getQuestions(soup):

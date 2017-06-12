@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+import grab
+import sys
+
+USAGE = '''
+kbot GAMEID (GAMEPIN)
+'''
+if len(sys.argv) == 3:
+    answers = grab.scrape(sys.argv[1])
+    print('Answers received')
+    grab.start_bot(sys.argv[2],"mr.bot",answers)
+elif len(sys.argv) == 2:
+    grab.printAnswers(sys.argv[1])
+else:
+    print(USAGE)
