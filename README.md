@@ -37,5 +37,5 @@ Requires above dependencies, then simply run the `bot` program. This
 has only been tested on MacOS.
 
 ## Contributers
-* [reteps](github.com/reteps)
-* [rydens](github.com/rydens)
+* [reteps](https://github.com/reteps)
+* [rydens](https://github.com/rydens)
