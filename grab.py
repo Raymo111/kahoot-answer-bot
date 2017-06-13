@@ -21,7 +21,12 @@ def get_page(id, email, passwd,speed):
     time.sleep(2 + speed)
     elem = driver.find_element_by_xpath("//*")
     stuff = elem.get_attribute("innerHTML")
-    driver.quit()
+    try:
+        driver.find_element_by_css_selector(".create-kahoot-type-selector")
+        print("Private kahoot.")
+        exit()
+    except Exception:
+        driver.quit()
     return stuff
 #-------------------------------------------------------------------------#
 def start_bot(id,name,answers):
@@ -44,6 +49,7 @@ def bot_answer(driver,answers):
     nextQ = False
     answered = False
     for i in range(len(answers)):
+        print("Question " ,i+1)
         while True:
             try:
                 driver.find_element_by_css_selector(".answer-screen")
@@ -58,8 +64,6 @@ def bot_answer(driver,answers):
                     answered = False
                     break
             time.sleep(0.01)
-        print("Question " ,i+1)
-    print('All done!')
     driver.quit()
 #-------------------------------------------------------------------------#
 def getQuestions(soup):
@@ -94,14 +98,13 @@ def getAnswers(soup,hascolor=True):
 #-------------------------------------------------------------------------#
 def printAnswers(url,email,passwd,co,co2,co3):
     global speed
-    print(speed)
     html = get_page(url,email,passwd,speed)
     soup = BeautifulSoup(html, 'html.parser')
     questions = getQuestions(soup)
     
     if questions == []:
-        print('failed, wifi not fast enough. Retrying with slower times')
         speed += 1.5
+        print('failed to reach page, wifi not fast enough. Retrying with delay set to {} seconds.'.format(speed))
         printAnswers(url,email,passwd,co,co2,co3)
     colors, answers = getAnswers(soup)
     for i in range(len(questions)):
@@ -114,8 +117,8 @@ def scrape(url,email,passwd):
     soup = BeautifulSoup(html, 'html.parser')
     answers, asd = getAnswers(soup,hascolor=False)
     if answers == []:
-        print('failed, wifi not fast enough. Retrying with slower times')
         speed += 1.5
+        print('failed to reach page, wifi not fast enough. Retrying with delay set to {} seconds.'.format(speed))
         scrape(url,email,passwd)
     return answers
 #-------------------------------------------------------------------------#
