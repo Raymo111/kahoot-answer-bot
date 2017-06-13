@@ -38,6 +38,6 @@ a perfect score!
 Requires above dependencies, then simply run the `kbot` program. This
 has only been tested on MacOS.
 
-## Contributers
+## Contributors
 * [reteps](https://github.com/reteps)
 * [rydens](https://github.com/rydens)
