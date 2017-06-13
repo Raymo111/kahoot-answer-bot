@@ -6,7 +6,7 @@ a new and improved edition that actually opens a browser and does
 everything for you. This one actually answers the questions, unlike
 some other tools we have taken some of our inspiration from.
 
-## It actually works!? cool
+## How does it work?
 Using a browser automation system and HTML parser, the program logs in
 to a custom account at [getkahoot.it](getkahoot.it), finds the quiz
 you are looking for based on its quiz ID, then grabs all the answers.
@@ -16,9 +16,11 @@ in using the game PIN and a custom name. As the game moves on, the
 program clicks the correct answers as soon as possible. You will get
 a perfect score!
 
-## However...
-*This will not work when the questions and/or answers are _randomized_
-or if the kahoot is not public on _[getkahoot.it](getkahoot.it)_*.
+## Caveats
+
++ The *bot* part does not work when the questions and/or answers are _randomized_. 
++ Use `kbot QUIZID` to read out the answers
++ if the kahoot is not public on _[getkahoot.it](getkahoot.it)_, this program does not work.
 
 ## Dependencies and Requirements
 
