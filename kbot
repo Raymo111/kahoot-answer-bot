@@ -8,8 +8,9 @@ kbot GAMEID (GAMEPIN) (USERNAME)
 EMAIL = "kahootbot27@gmail.com"
 PASSWORD = "appropriatesigma"
 name = "jimmy"
-COLOR1 = "\033[1;37m" #text
+COLOR1 = "\033[1;37m" #questions
 COLOR2 = "\033[0m" #lines
+COLOR3 = "\033[0;34m" #answers
 if len(sys.argv) == 4:
     name = sys.argv[3]
 
@@ -18,6 +19,6 @@ if len(sys.argv) >= 3:
     print('Answers received.')
     grab.start_bot(sys.argv[2],name,answers)
 elif len(sys.argv) == 2:
-    grab.printAnswers(sys.argv[1],EMAIL,PASSWORD,COLOR1,COLOR2)
+    grab.printAnswers(sys.argv[1],EMAIL,PASSWORD,COLOR1,COLOR2,COLOR3)
 else:
     print(USAGE)

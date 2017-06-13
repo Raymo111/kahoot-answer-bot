@@ -7,16 +7,18 @@
 import sys, time
 from bs4 import BeautifulSoup
 from selenium import webdriver
+speed = 0
 #-------------------------------------------------------------------------#
-def get_page(id, email, passwd):
+def get_page(id, email, passwd,speed):
     driver = webdriver.Chrome()
     driver.get('https://create.kahoot.it/#quiz/' + id);
+    time.sleep(0.25 + speed)
     box = driver.find_element_by_css_selector('#username-input-field__input')
     box.send_keys(email)
     box2 = driver.find_element_by_css_selector('#password-input-field__input')
     box2.send_keys(passwd)
     driver.find_element_by_css_selector('.button--cta-play').click()
-    time.sleep(2)
+    time.sleep(2 + speed)
     elem = driver.find_element_by_xpath("//*")
     stuff = elem.get_attribute("innerHTML")
     driver.quit()
@@ -86,21 +88,30 @@ def getAnswers(soup,hascolor=True):
 
     return colors, answers
 #-------------------------------------------------------------------------#
-def printAnswers(url,email,passwd,co,co2):
-    html = get_page(url,email,passwd)
+def printAnswers(url,email,passwd,co,co2,co3):
+    global speed
+    print(speed)
+    html = get_page(url,email,passwd,speed)
     soup = BeautifulSoup(html, 'html.parser')
     questions = getQuestions(soup)
+    
+    if questions == []:
+        print('failed, wifi not fast enough. Retrying with slower times')
+        speed += 1.5
+        printAnswers(url,email,passwd,co,co2,co3)
     colors, answers = getAnswers(soup)
-    print('-----------------------------------------------------------------------------------------------------------------')
-    print('|  {0}NUM{1}  |  {0}Question{1}                                         |  {0}Answer{1}                                 |  {0}Color{1}  |'.format(co,co2))
-    print('-----------------------------------------------------------------------------------------------------------------')
     for i in range(len(questions)):
-        print('|  {}{:03d}{}  |  {}{:49s}{}|  {}{:39s}{}|  {}{:6s}{} |'.format(co,i,co2,co,questions[i],co2,co,answers[i],co2,co,colors[i],co2))
-        print('-----------------------------------------------------------------------------------------------------------------')
+        print('{}{:100s}{}  |  {}{:6s}{} |  {}{:3d}{}  |'.format(co,questions[i],co2,co,colors[i],co2,co,i+1,co2))
+        print('{}{:100s}{}  |         |       |'.format(co3,answers[i],co2))
 #-------------------------------------------------------------------------#
 def scrape(url,email,passwd):
-    html = get_page(url,email,passwd)
+    global speed
+    html = get_page(url,email,passwd,speed)
     soup = BeautifulSoup(html, 'html.parser')
     answers, asd = getAnswers(soup,hascolor=False)
+    if answers == []:
+        print('failed, wifi not fast enough. Retrying with slower times')
+        speed += 1.5
+        scrape(url,email,passwd,co,co2,co3)
     return answers
 #-------------------------------------------------------------------------#
