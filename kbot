@@ -11,6 +11,8 @@ name = "jimmy"
 COLOR1 = "\033[1;37m" #questions
 COLOR2 = "\033[0m" #lines
 COLOR3 = "\033[0;34m" #answers
+if sys.platform == 'win32':
+    COLOR1, COLOR2, COLOR3 = "","",""
 if len(sys.argv) == 4:
     name = sys.argv[3]
 
