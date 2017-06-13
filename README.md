@@ -1,6 +1,6 @@
 <img src="https://ryand.ryansdell.tk/images/kahootbotimg.png"
 width=300px height=300px alt="kBot">
-# The Amazing Automatic Kahoot Bot
+# The Amazing Automatic Kahoot Bot (kbot)
 People have made bots and things for kahoot in the past, but this is
 a new and improved edition that actually opens a browser and does
 everything for you. This one actually answers the questions, unlike
