@@ -72,19 +72,23 @@ def getQuestions(soup):
 #-------------------------------------------------------------------------#
 def getAnswers(soup,hascolor=True):
 
-    stuff = soup.findAll("li", {"class":'answers-list__item'})
+    questions = soup.findAll("ul", {"class":'answers-list'})
     colors = []
     answers = []
-    for answer in stuff:
-        if answer.find("div", {"class":'answer-label__correct-icon'}) != None:
-            num = dict(answer.find("div",{"class":'answer-label'}).attrs)["class"][1][-1]
-            if hascolor:
-                lookuptable = {"0":"red", "1":"blue","2":"yellow","3":"green"}
-                color = lookuptable[num]
-                answers.append(answer.get_text().strip())
-                colors.append(color)
-            else:
-                colors.append(num)
+    for i, question in enumerate(questions):
+        possibleanswers = question.findAll("li", {"class":"answers-list__item"})
+        for possibleanswer in possibleanswers:
+            if possibleanswer.find("div",{"class":"answer-label__correct-icon"}) != None:
+                num = dict(possibleanswer.find("div",{"class":'answer-label'}).attrs)["class"][1][-1]
+                if hascolor:
+                    lookuptable = {"0":"red", "1":"blue","2":"yellow","3":"green"}
+                    color = lookuptable[num]
+                    answers.append(possibleanswer.get_text().strip())
+                    colors.append(color)
+                else:
+                    colors.append(num)
+                break
+                #only need 1 answer, so break
 
     return colors, answers
 #-------------------------------------------------------------------------#
