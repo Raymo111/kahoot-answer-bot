@@ -33,7 +33,7 @@ or if the kahoot is not public on _[getkahoot.it](getkahoot.it)_*.
   _Generally just a `pip3 install bs4`_
 
 ## Installation
-Requires above dependencies, then simply run the `bot` program. This
+Requires above dependencies, then simply run the `kbot` program. This
 has only been tested on MacOS.
 
 ## Contributers
