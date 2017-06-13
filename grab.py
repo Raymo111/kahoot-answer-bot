@@ -112,6 +112,6 @@ def scrape(url,email,passwd):
     if answers == []:
         print('failed, wifi not fast enough. Retrying with slower times')
         speed += 1.5
-        scrape(url,email,passwd,co,co2,co3)
+        scrape(url,email,passwd)
     return answers
 #-------------------------------------------------------------------------#
