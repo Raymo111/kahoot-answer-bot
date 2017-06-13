@@ -24,6 +24,9 @@ a perfect score!
 
 ## Dependencies and Requirements
 
+
+* python3 [mac download tutorial](https://python-guide-pt-br.readthedocs.io/en/latest/starting/install3/osx/) _Generally just a `brew install python3`_
+
 * The [Google Chrome Web
   Browser](https://www.google.com/chrome/browser/desktop/index.html)
 * [selenium for Python3](https://pypi.python.org/pypi/selenium)
