@@ -36,16 +36,22 @@ def start_bot(id,name,answers,speed):
     box = driver.find_element_by_css_selector('#inputSession')
     box.send_keys(id)
     driver.find_element_by_css_selector('.btn-greyscale').click()
-    time.sleep(1.5 + speed)
+    time.sleep(1 + speed)
     box = driver.find_element_by_css_selector('#username')
     box.send_keys(name)
-    try:
-        driver.find_element_by_css_selector('#username')
-        speed += 2.5
+    driver.find_element_by_css_selector('.btn-greyscale').click()
+    response = input("click [ENTER] to start the bot\npress n + [ENTER] to choose a new name and anything else to retry login.\n")
+    if response == 'n':
+        driver.quit()
+        name = input('New name > ')
+        print('Retrying with name set to {}'.format(name))
         start_bot(id,name,answers,speed)
-    except Exception:
-        driver.find_element_by_css_selector('.btn-greyscale').click()
-    input("click [ENTER] to start the bot\n")
+    elif response == '': 
+        driver.quit()
+        speed += 2.5
+        print('Retrying with speed set to {}'.format(speed))
+        start_bot(id,name,answers,speed)
+
     bot_answer(driver,answers)
 #-------------------------------------------------------------------------#
 def bot_answer(driver,answers):

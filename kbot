@@ -19,7 +19,7 @@ if len(sys.argv) == 4:
 if len(sys.argv) >= 3:
     answers = grab.scrape(sys.argv[1],EMAIL,PASSWORD)
     print('Answers received.')
-    grab.start_bot(sys.argv[2],name,answers)
+    grab.start_bot(sys.argv[2],name,answers,0)
 elif len(sys.argv) == 2:
     grab.printAnswers(sys.argv[1],EMAIL,PASSWORD,COLOR1,COLOR2,COLOR3)
 else:
