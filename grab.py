@@ -29,17 +29,22 @@ def get_page(id, email, passwd,speed):
         driver.quit()
     return stuff
 #-------------------------------------------------------------------------#
-def start_bot(id,name,answers):
+def start_bot(id,name,answers,speed):
     driver = webdriver.Chrome()
     driver.get("https://kahoot.it/#/")
-    time.sleep(0.25)
+    time.sleep(0.25 + speed)
     box = driver.find_element_by_css_selector('#inputSession')
     box.send_keys(id)
     driver.find_element_by_css_selector('.btn-greyscale').click()
-    time.sleep(1)
+    time.sleep(1.5 + speed)
     box = driver.find_element_by_css_selector('#username')
     box.send_keys(name)
-    driver.find_element_by_css_selector('.btn-greyscale').click()
+    try:
+        driver.find_element_by_css_selector('#username')
+        speed += 2.5
+        start_bot(id,name,answers,speed)
+    except Exception:
+        driver.find_element_by_css_selector('.btn-greyscale').click()
     input("click [ENTER] to start the bot\n")
     bot_answer(driver,answers)
 #-------------------------------------------------------------------------#
@@ -107,7 +112,7 @@ def printAnswers(url,email,passwd,co,co2,co3):
     questions = getQuestions(soup)
     
     if questions == []:
-        speed += 1.5
+        speed += 2.5
         print('failed to reach page, wifi not fast enough. Retrying with delay set to {} seconds.'.format(speed))
         printAnswers(url,email,passwd,co,co2,co3)
     colors, answers = getAnswers(soup)
