@@ -18,24 +18,24 @@ a perfect score!
 
 ## Caveats
 
-+ The *bot* part does not work when the questions and/or answers are _randomized_. 
++ The **bot** part does not work when the questions and/or answers are *randomized*. 
 + Use `kbot QUIZID` to read out the answers
-+ if the kahoot is not public on _[getkahoot.it](getkahoot.it)_, this program does not work.
++ if the kahoot is not public on [getkahoot.it](getkahoot.it), this program does not work.
 + This has only been tested on MacOS.
 ## Dependencies and Requirements
 
 
-* python3 [mac download tutorial](https://python-guide-pt-br.readthedocs.io/en/latest/starting/install3/osx/) _Generally just a `brew install python3`_
+* python3 [mac download tutorial](https://python-guide-pt-br.readthedocs.io/en/latest/starting/install3/osx/) Generally just a `brew install python3`
 
 * The [Google Chrome Web
   Browser](https://www.google.com/chrome/browser/desktop/index.html)
 * [selenium for Python3](https://pypi.python.org/pypi/selenium)
-  _Generally just a `pip3 install selenium`_
+  Generally just a `pip3 install selenium`
 * [Chrome
   Driver](https://sites.google.com/a/chromium.org/chromedriver/downloads)
-  _Make sure the executable is in your `$PATH` somewhere_
+  Make sure the executable is in your `$PATH` somewhere
 * [BeautifulSoup4 for Python3](https://pypi.python.org/pypi/beautifulsoup4)
-  _Generally just a `pip3 install bs4`_
+  Generally just a `pip3 install bs4`
 
 ## FAQ
  + please see the [wiki](https://github.com/reteps/kbot/wiki/FAQ)
