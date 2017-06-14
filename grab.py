@@ -135,7 +135,7 @@ def scrape(url,email,passwd):
     soup = BeautifulSoup(html, 'html.parser')
     answers, asd = getAnswers(soup,hascolor=False)
     if answers == []:
-        speed += 1.5
+        speed += 2.5
         print('failed to reach page, wifi not fast enough. Retrying with delay set to {} seconds.'.format(speed))
         scrape(url,email,passwd)
     return answers
