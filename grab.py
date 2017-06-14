@@ -55,7 +55,11 @@ def bot_answer(driver,answers):
                 driver.find_element_by_css_selector(".answer-screen")
                 if not answered:
                     print("Chose " + lookup[answers[i]])
-                    driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
+                    try:
+                        driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
+                    except Exception as e:
+                        print('Question was skipped before bot could answer.')
+                        break #next question
                     answered = True
             except Exception as e:
                 nextQ = True
