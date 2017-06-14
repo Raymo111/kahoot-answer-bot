@@ -21,7 +21,7 @@ a perfect score!
 + The *bot* part does not work when the questions and/or answers are _randomized_. 
 + Use `kbot QUIZID` to read out the answers
 + if the kahoot is not public on _[getkahoot.it](getkahoot.it)_, this program does not work.
-
++ This has only been tested on MacOS.
 ## Dependencies and Requirements
 
 
@@ -37,10 +37,8 @@ a perfect score!
 * [BeautifulSoup4 for Python3](https://pypi.python.org/pypi/beautifulsoup4)
   _Generally just a `pip3 install bs4`_
 
-## Installation
-Requires above dependencies, then simply run the `kbot` program. This
-has only been tested on MacOS.
-
+## FAQ
+ + please see the wiki.
 ## Contributors
 * [reteps](https://github.com/reteps)
 * [rydens](https://github.com/rydens)
