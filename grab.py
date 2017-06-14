@@ -47,12 +47,13 @@ def start_bot(id,name,answers,speed):
         print('Retrying with name set to {}'.format(name))
         start_bot(id,name,answers,speed)
     elif response == '': 
+        bot_answer(driver,answers)
+    else:
         driver.quit()
         speed += 2.5
         print('Retrying with speed set to {}'.format(speed))
         start_bot(id,name,answers,speed)
 
-    bot_answer(driver,answers)
 #-------------------------------------------------------------------------#
 def bot_answer(driver,answers):
     lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
@@ -65,18 +66,20 @@ def bot_answer(driver,answers):
             try:
                 driver.find_element_by_css_selector(".answer-screen")
                 if not answered:
-                    print("Chose " + lookup[answers[i]])
                     try:
                         driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
+                        print("Chose " + lookup[answers[i]])
                     except Exception as e:
                         print('Question was skipped before bot could answer.')
+                        time.sleep(0.5) #prevent doubles
+                        answered, nextQ = False, False
                         break #next question
+                        
                     answered = True
             except Exception as e:
                 nextQ = True
                 if nextQ and answered:
-                    nextQ = False
-                    answered = False
+                    nextQ ,answered = False, False
                     break
             time.sleep(0.01)
     driver.quit()
