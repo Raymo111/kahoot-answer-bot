@@ -38,7 +38,7 @@ a perfect score!
   _Generally just a `pip3 install bs4`_
 
 ## FAQ
- + please see the wiki.
+ + please see the [wiki](https://github.com/reteps/kbot/wiki/FAQ)
 ## Contributors
 * [reteps](https://github.com/reteps)
 * [rydens](https://github.com/rydens)
