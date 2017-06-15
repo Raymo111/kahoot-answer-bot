@@ -40,7 +40,7 @@ def start_bot(id,name,answers,speed):
     box = driver.find_element_by_css_selector('#username')
     box.send_keys(name)
     driver.find_element_by_css_selector('.btn-greyscale').click()
-    response = input("click [ENTER] to start the bot\npress n + [ENTER] to choose a new name and anything else to retry login.\n")
+    response = input("click [ENTER] to start the bot\npress n + [ENTER] to choose a new name\n press anything + [ENTER] to retry login.\n")
     if response == 'n':
         driver.quit()
         name = input('New name > ')
