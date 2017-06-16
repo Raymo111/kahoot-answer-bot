@@ -71,6 +71,7 @@ def start_bot(id,name,answers,speed=0):
         bot_answer(driver,answers)
 #-------------------------------------------------------------------------#
 def bot_answer(driver,answers):
+    print('bot started.')
     lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
     lookup = {"0":"red","1":"blue","2":"yellow","3":"green"}
     nextQ = False
