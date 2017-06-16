@@ -7,7 +7,6 @@
 import sys, time
 from bs4 import BeautifulSoup
 from selenium import webdriver
-speed = 0
 #-------------------------------------------------------------------------#
 def get_page(id, email, passwd):
     speed = 0
@@ -26,7 +25,7 @@ def get_page(id, email, passwd):
         try:
             driver.find_element_by_css_selector('.kahoot-registration') #still on login
             speed += 2.5
-            print('Retrying with speed set to {}'.format(speed))
+            print('Retrying to connect to page with speed set to {}'.format(speed))
 
         except Exception:
             break
@@ -56,15 +55,20 @@ def start_bot(id,name,answers,speed=0):
             break
         except Exception:
             speed += 2.5
-            print('Retrying with delay set to {} seconds'.format(speed))
-    response = input("click [ENTER] to start the bot\npress anything + [ENTER] to choose a new name\n")
-    if response == '': 
-        bot_answer(driver,answers)
-    else:
+            print('Retrying bot login with delay set to {} seconds'.format(speed))
+    print('connected successfully')
+    print("press [1] to start the bot\npress [2] to choose a new name\npress [3] to start on a specific question\n")
+    response = input(" > ")
+    if response == '3': 
+        question = int(input('starting question > ')) - 1
+        bot_answer(driver,answers[question:])
+    elif response == '2':
         driver.quit()
         name = input('New name > ')
         print('Retrying with name set to {} and delay set to {}'.format(name,speed))
         start_bot(id,name,answers,speed=speed)
+    else:
+        bot_answer(driver,answers)
 #-------------------------------------------------------------------------#
 def bot_answer(driver,answers):
     lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
