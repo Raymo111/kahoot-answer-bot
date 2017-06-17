@@ -10,24 +10,26 @@ from selenium import webdriver
 #-------------------------------------------------------------------------#
 def get_page(id, email, passwd):
     speed = 0
-    driver = webdriver.Chrome()
     while True:
+        driver = webdriver.Chrome()
         driver.get('https://create.kahoot.it/#quiz/' + id);
         time.sleep(0.25 + speed)
-        box = driver.find_element_by_css_selector('#username-input-field__input')
-        box.send_keys(email)
-        box2 = driver.find_element_by_css_selector('#password-input-field__input')
-        box2.send_keys(passwd)
-        driver.find_element_by_css_selector('.button--cta-play').click()
-        time.sleep(2 + speed)
         try:
-            driver.find_element_by_css_selector('#quiz-detail-header') #still on login
+            box = driver.find_element_by_css_selector('#username-input-field__input')
+            box.send_keys(email)
+            box2 = driver.find_element_by_css_selector('#password-input-field__input')
+            box2.send_keys(passwd)
+            driver.find_element_by_css_selector('.button--cta-play').click()
+            time.sleep(2 + speed)
+            #moment of truth#
+            driver.find_element_by_css_selector('#quiz-detail-header') #check success
             elem = driver.find_element_by_xpath("//*")
             stuff = elem.get_attribute("innerHTML")
             break
         except Exception:
+            driver.quit()
             speed += 2.5
-            print('Retrying to connect to page with speed set to {}'.format(speed))
+            print('Retrying connection with speed set to {}'.format(speed))
     try:
         driver.find_element_by_css_selector(".create-kahoot-type-selector")
         print("Private kahoot.")
