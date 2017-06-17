@@ -20,15 +20,14 @@ def get_page(id, email, passwd):
         box2.send_keys(passwd)
         driver.find_element_by_css_selector('.button--cta-play').click()
         time.sleep(2 + speed)
-        elem = driver.find_element_by_xpath("//*")
-        stuff = elem.get_attribute("innerHTML")
         try:
-            driver.find_element_by_css_selector('.kahoot-registration') #still on login
+            driver.find_element_by_css_selector('#quiz-detail-header') #still on login
+            elem = driver.find_element_by_xpath("//*")
+            stuff = elem.get_attribute("innerHTML")
+            break
+        except Exception:
             speed += 2.5
             print('Retrying to connect to page with speed set to {}'.format(speed))
-
-        except Exception:
-            break
     try:
         driver.find_element_by_css_selector(".create-kahoot-type-selector")
         print("Private kahoot.")
