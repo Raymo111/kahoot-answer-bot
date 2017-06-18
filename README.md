@@ -37,6 +37,8 @@ a perfect score!
 * [BeautifulSoup4 for Python3](https://pypi.python.org/pypi/beautifulsoup4)
   Generally just a `pip3 install bs4`
 
+* the beautiful one liner:
+`/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)";brew install python3;`
 ## FAQ
  + please see the [wiki](https://github.com/reteps/kbot/wiki/FAQ)
 ## Contributors
