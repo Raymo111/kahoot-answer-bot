@@ -62,7 +62,7 @@ def start_bot(id,name,answers,speed=0):
     response = input(" > ")
     if response == '3': 
         question = int(input('starting question > ')) - 1
-        bot_answer(driver,answers[question:])
+        bot_answer(driver,answers[question:],q=question)
     elif response == '2':
         driver.quit()
         name = input('New name > ')
@@ -71,14 +71,14 @@ def start_bot(id,name,answers,speed=0):
     else:
         bot_answer(driver,answers)
 #-------------------------------------------------------------------------#
-def bot_answer(driver,answers):
+def bot_answer(driver,answers,q=0):
     print('bot started.')
     lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
     lookup = {"0":"red","1":"blue","2":"yellow","3":"green"}
     nextQ = False
     answered = False
     for i in range(len(answers)):
-        print("Question " ,i+1)
+        print("Question " ,i+1+q)
         while True:
             try:
                 driver.find_element_by_css_selector(".answer-screen")
