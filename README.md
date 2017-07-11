@@ -15,6 +15,13 @@ After that, the program opens [kahoot.it](kahoot.it), where it signs
 in using the game PIN and a custom name. As the game moves on, the
 program clicks the correct answers as soon as possible. You will get
 a perfect score!
+## What's next
+
++ Website (phase 1)
+  + yes, that's right, a php website that you can run the bot from.
++ OCR (phase 2) (maybe)
+  + take a picture of the url, send it to the website, spits out url
+  + may not work well
 
 ## Caveats
 
