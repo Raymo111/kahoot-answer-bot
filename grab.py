@@ -4,17 +4,17 @@
 #written by Peter Stenger (@reteps) with support from Ryan Densmore (@rydens)
 #If you use this code, please cite us / this page.
 #-------------------------------------------------------------------------#
-import sys, time
-from bs4 import BeautifulSoup
-from selenium import webdriver
+import sys, time, json
 from urllib import error, request
-import json
 #-------------------------------------------------------------------------#
 def get_details(id, email, passwd):
     authparams = {'username':email,'password':passwd,'grant_type':'password'}
     stuff = json.dumps(authparams).encode()
     data = request.Request('https://create.kahoot.it/rest/authenticate',data=stuff,headers={'content-type':'application/json'})
-    response = request.urlopen(data).read()
+    try:
+        response = request.urlopen(data).read()
+    except error.HTTPError:
+        print('The email or password is invalid')
     token = json.loads(response)['access_token']
     r = request.Request("https://create.kahoot.it/rest/kahoots/{}".format(id), headers={'content-type' : 'application/json','authorization' : token})
     try:
@@ -36,6 +36,7 @@ def get_details(id, email, passwd):
 #-------------------------------------------------------------------------#
 def start_bot(id,name,colors,speed=0):
 
+    from selenium import webdriver
     driver = webdriver.Chrome()
     while True:
         try:
@@ -90,14 +91,10 @@ def bot_answer(driver,colors,q=0):
             except Exception as e:
                 nextQ = True
                 if nextQ and answered:
-                    nextQ ,answered = False, False
+                    nextQ, answered = False, False
                     break
             time.sleep(0.01)
     driver.quit()
 #-------------------------------------------------------------------------#
 def printAnswers(url,email,passwd,co,co2,co3):
     qanda, colors = get_details(url,email,passwd)
-    for i in range(len(qanda)):
-        print('{}{:100s}{}  |  {}{:6s}{} |  {}{:3d}{}  |'.format(co,qanda[i][0],co2,co,colors[i],co2,co,i+1,co2))
-        print('{}{:100s}{}  |         |       |'.format(co3,qanda[i][1],co2))
-#-------------------------------------------------------------------------#
