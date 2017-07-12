@@ -3,10 +3,11 @@ import grab
 import sys
 
 USAGE = '''
+kbot GAMEID 
 kbot GAMEID (GAMEPIN) (USERNAME)
 '''
 EMAIL = "xxx@gmail.com"
-PASSWORD = "xxx"
+PASSWORD = "xxxxxxxx"
 name = "jimmy"
 COLOR1 = "\033[1;37m" #questions
 COLOR2 = "\033[0m" #lines

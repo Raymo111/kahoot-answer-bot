@@ -7,8 +7,13 @@
 import sys, time
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from urllib import request, parse
 #-------------------------------------------------------------------------#
 def get_page(id, email, passwd):
+    authparams = {'username': email,'password': passwd,'grant_type': 'password'}
+	result = json.loads(request.Request('https://create.kahoot.it/rest/authenticate',data=parse.urlencode(authparams).encode(),headers={'content-type':'application/json'}))['access_token']
+	print(result)
+
     speed = 0
     while True:
         driver = webdriver.Chrome()
