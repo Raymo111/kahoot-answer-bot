@@ -7,45 +7,35 @@
 import sys, time
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from urllib import request, parse
+from urllib import error, request
+import json
 #-------------------------------------------------------------------------#
-def get_page(id, email, passwd):
-    authparams = {'username': email,'password': passwd,'grant_type': 'password'}
-	result = json.loads(request.Request('https://create.kahoot.it/rest/authenticate',data=parse.urlencode(authparams).encode(),headers={'content-type':'application/json'}))['access_token']
-	print(result)
-
-    speed = 0
-    while True:
-        driver = webdriver.Chrome()
-        driver.get('https://create.kahoot.it/#quiz/' + id);
-        time.sleep(0.25 + speed)
-        try:
-            box = driver.find_element_by_css_selector('#username-input-field__input')
-            box.send_keys(email)
-            box2 = driver.find_element_by_css_selector('#password-input-field__input')
-            box2.send_keys(passwd)
-            driver.find_element_by_css_selector('.button--cta-play').click()
-            time.sleep(2 + speed)
-            #moment of truth#
-            driver.find_element_by_css_selector('#quiz-detail-header') #check success
-            elem = driver.find_element_by_xpath("//*")
-            stuff = elem.get_attribute("innerHTML")
-            break
-        except Exception:
-            driver.quit()
-            speed += 2.5
-            print('Retrying connection with speed set to {}'.format(speed))
+def get_details(id, email, passwd):
+    authparams = {'username':email,'password':passwd,'grant_type':'password'}
+    stuff = json.dumps(authparams).encode()
+    data = request.Request('https://create.kahoot.it/rest/authenticate',data=stuff,headers={'content-type':'application/json'})
+    response = request.urlopen(data).read()
+    token = json.loads(response)['access_token']
+    r = request.Request("https://create.kahoot.it/rest/kahoots/{}".format(id), headers={'content-type' : 'application/json','authorization' : token})
     try:
-        driver.find_element_by_css_selector(".create-kahoot-type-selector")
-        print("Private kahoot.")
+        response2 = json.loads(request.urlopen(r).read())['questions']
+    except error.HTTPError:
+        print('private kahoot')
         exit()
-    except Exception:
-        driver.quit()
-        
-        
-    return stuff
+    qanda = []
+    colors = []
+    lookuptable = {0:"red", 1:"blue",2:"yellow",3:"green"} 
+    speed = 0
+    for question in response2:
+        for i, choice in enumerate(question['choices']):
+            if choice['correct'] == True:
+                qanda.append([question['question'],choice['answer']])
+                colors.append(lookuptable[i])
+                break
+    return qanda, colors
 #-------------------------------------------------------------------------#
-def start_bot(id,name,answers,speed=0):
+def start_bot(id,name,colors,speed=0):
+
     driver = webdriver.Chrome()
     while True:
         try:
@@ -67,30 +57,29 @@ def start_bot(id,name,answers,speed=0):
     response = input(" > ")
     if response == '3': 
         question = int(input('starting question > ')) - 1
-        bot_answer(driver,answers[question:],q=question)
+        bot_answer(driver,colors[question:],q=question)
     elif response == '2':
         driver.quit()
         name = input('New name > ')
         print('Retrying with name set to {} and delay set to {}'.format(name,speed))
-        start_bot(id,name,answers,speed=speed)
+        start_bot(id,name,colors,speed=speed)
     else:
-        bot_answer(driver,answers)
+        bot_answer(driver,colors)
 #-------------------------------------------------------------------------#
-def bot_answer(driver,answers,q=0):
+def bot_answer(driver,colors,q=0):
     print('bot started.')
-    lookuptable = {"0":".answerA", "1":".answerB","2":".answerC","3":".answerD"}
-    lookup = {"0":"red","1":"blue","2":"yellow","3":"green"}
+    lookuptable = {"red":".answerA", "blue":".answerB","yellow":".answerC","green":".answerD"}
     nextQ = False
     answered = False
-    for i in range(len(answers)):
+    for i in range(len(colors)):
         print("Question " ,i+1+q)
         while True:
             try:
                 driver.find_element_by_css_selector(".answer-screen")
                 if not answered:
                     try:
-                        driver.find_element_by_css_selector(lookuptable[answers[i]]).click()
-                        print("Chose " + lookup[answers[i]])
+                        driver.find_element_by_css_selector(lookuptable[colors[i]]).click()
+                        print("Chose " + colors[i])
                     except Exception as e:
                         print('Question was skipped before bot could answer.')
                         time.sleep(0.5) #prevent doubles
@@ -106,48 +95,9 @@ def bot_answer(driver,answers,q=0):
             time.sleep(0.01)
     driver.quit()
 #-------------------------------------------------------------------------#
-def getQuestions(soup):
-    questions = []
-    stuff = soup.findAll("td", {"class":'question-title'})
-    for qt in stuff:
-        question = qt.find("div").get_text()
-        questions.append(question.strip()[:-45])
-    return questions
-#-------------------------------------------------------------------------#
-def getAnswers(soup,hascolor=True):
-
-    questions = soup.findAll("ul", {"class":'answers-list'})
-    colors = []
-    answers = []
-    for i, question in enumerate(questions):
-        possibleanswers = question.findAll("li", {"class":"answers-list__item"})
-        for possibleanswer in possibleanswers:
-            if possibleanswer.find("div",{"class":"answer-label__correct-icon"}) != None:
-                num = dict(possibleanswer.find("div",{"class":'answer-label'}).attrs)["class"][1][-1]
-                if hascolor:
-                    lookuptable = {"0":"red", "1":"blue","2":"yellow","3":"green"}
-                    color = lookuptable[num]
-                    answers.append(possibleanswer.get_text().strip())
-                    colors.append(color)
-                else:
-                    colors.append(num)
-                break
-                #only need 1 answer, so break
-
-    return colors, answers
-#-------------------------------------------------------------------------#
 def printAnswers(url,email,passwd,co,co2,co3):
-    html = get_page(url,email,passwd)
-    soup = BeautifulSoup(html, 'html.parser')
-    questions = getQuestions(soup)
-    colors, answers = getAnswers(soup)
-    for i in range(len(questions)):
-        print('{}{:100s}{}  |  {}{:6s}{} |  {}{:3d}{}  |'.format(co,questions[i],co2,co,colors[i],co2,co,i+1,co2))
-        print('{}{:100s}{}  |         |       |'.format(co3,answers[i],co2))
-#-------------------------------------------------------------------------#
-def scrape(url,email,passwd):
-    html = get_page(url,email,passwd)
-    soup = BeautifulSoup(html, 'html.parser')
-    answers, asd = getAnswers(soup,hascolor=False)
-    return answers
+    qanda, colors = get_details(url,email,passwd)
+    for i in range(len(qanda)):
+        print('{}{:100s}{}  |  {}{:6s}{} |  {}{:3d}{}  |'.format(co,qanda[i][0],co2,co,colors[i],co2,co,i+1,co2))
+        print('{}{:100s}{}  |         |       |'.format(co3,qanda[i][1],co2))
 #-------------------------------------------------------------------------#
