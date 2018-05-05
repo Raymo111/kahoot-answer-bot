@@ -1,5 +1,3 @@
-<img src="https://ryand.ryansdell.tk/images/kahootbotimg.png"
-width=300px height=300px alt="kBot">
 # The Amazing Automatic Kahoot Bot (kbot)
 People have made bots and things for kahoot in the past, but this is
 a new and improved edition that actually opens a browser and does
@@ -14,15 +12,13 @@ you are looking for based on its quiz ID, then grabs all the answers.
 After that, the program opens [kahoot.it](kahoot.it), where it signs
 in using the game PIN and a custom name. As the game moves on, the
 program clicks the correct answers as soon as possible. You will get
-a perfect score!
-## Online quiz scanner
-+ reteps.tk/kahoot.html
+a (nearly) perfect score!
+
 ## Caveats
 
 + The **bot** part does not work when the questions and/or answers are *randomized*. 
 + Use `kbot QUIZID` to read out the answers
 + if the kahoot is not public on [getkahoot.it](getkahoot.it), this program does not work.
-+ This has only been tested on MacOS.
 ## Dependencies and Requirements
 
 
@@ -39,5 +35,5 @@ a perfect score!
 ## FAQ
  + please see the [wiki](https://github.com/reteps/kbot/wiki/FAQ)
 ## Contributors
-* [reteps](https://github.com/reteps)
-* [rydens](https://github.com/rydens)
+* [reteps](https://github.com/reteps) - Main programming
+* [rydens](https://github.com/rydens) - Documentation
