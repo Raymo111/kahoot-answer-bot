@@ -76,7 +76,7 @@ def bot_answer(driver,colors,q=0):
             waitForItem(driver, "div#app",timeout=20)
             driver.find_element_by_css_selector(lookuptable[colors[i]]).click()
             print('[info] Chose ' + colors[i])
-        except selenium.common.exceptions.TimeoutException:
+        except TimeoutException:
             print('[error] Question was skipped before bot could answer.')
         time.sleep(1)
     driver.quit()
