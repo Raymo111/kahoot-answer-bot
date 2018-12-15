@@ -6,8 +6,8 @@ USAGE = '''
 kbot GAMEID 
 kbot GAMEID (GAMEPIN) (USERNAME)
 '''
-EMAIL = "peter.promotions.stenger@gmail.com"
-PASSWORD = "retep2170"
+EMAIL = ""
+PASSWORD = ""
 NAME = "KBOT"
 COLOR1 = "\033[1;37m" #questions
 COLOR2 = "\033[0m" #lines
