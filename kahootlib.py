@@ -10,10 +10,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, ElementNotVisibleException
-#-------------------------------------------------------------------------#
+
 def waitForItem(driver, css, timeout=10):
     WebDriverWait(driver, timeout).until(expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, css)))
-#-------------------------------------------------------------------------#
+
 def get_details(kahootid, email='kahootbot28@gmail.com', passwd='botkahoot28'):
     authparams = {'username':email,'password':passwd,'grant_type':'password'}
     print('[info] trying to authenticate')
@@ -38,7 +38,7 @@ def get_details(kahootid, email='kahootbot28@gmail.com', passwd='botkahoot28'):
                 color_sequence.append(lookuptable[i])
                 break
     return qanda, color_sequence
-#-------------------------------------------------------------------------#
+
 def start_bot(kahootId,name,colors):
 
     driver = webdriver.Chrome()
@@ -64,7 +64,7 @@ press [3] to start on a specific question''')
         start_bot(id,name,colors)
     else:
         bot_answer(driver,colors)
-#-------------------------------------------------------------------------#
+
 def bot_answer(driver,colors,q=0):
     print('[info] Bot started.')
     driver.switch_to.frame(driver.find_element_by_tag_name("iframe"))
