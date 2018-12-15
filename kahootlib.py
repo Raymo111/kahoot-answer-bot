@@ -9,7 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementNotVisibleException
 #-------------------------------------------------------------------------#
 def waitForItem(driver, css, timeout=10):
     WebDriverWait(driver, timeout).until(expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, css)))
@@ -73,10 +73,10 @@ def bot_answer(driver,colors,q=0):
     for i in range(len(colors)):
         print('[info] Question ' ,i+1+q)
         try:
-            waitForItem(driver, "div#app",timeout=20)
+            waitForItem(driver, "div#app",timeout=30)
             driver.find_element_by_css_selector(lookuptable[colors[i]]).click()
             print('[info] Chose ' + colors[i])
-        except TimeoutException:
+        except ElementNotVisibleException:
             print('[error] Question was skipped before bot could answer.')
         time.sleep(1)
     driver.quit()
