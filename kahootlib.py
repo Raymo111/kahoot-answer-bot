@@ -30,7 +30,6 @@ def get_details(kahootid, email, passwd):
     qanda = {}
     color_sequence = []
     lookuptable = {0:'red', 1:'blue',2:'yellow',3:'green'}
-    speed = 0
     for question in response['questions']:
         for i in range(len(question['choices'])):
             if question['choices'][i]['correct']:
@@ -39,7 +38,7 @@ def get_details(kahootid, email, passwd):
                 break
     return qanda, color_sequence
 
-def start_bot(kahootId,name,colors):
+def start_bot(kahootId,name,colors,timeout):
 
     driver = webdriver.Chrome()
     driver.get('https://kahoot.it/#/')
@@ -56,16 +55,17 @@ press [3] to start on a specific question''')
     response = input(' > ')
     if response == '3':
         question = int(input('starting question > ')) - 1
-        bot_answer(driver,colors[question:],q=question)
+        bot_answer(driver, colors[question:], timeout, q=question)
     elif response == '2':
         driver.quit()
         name = input('New name > ')
         print('[info] Restarting bot with the name {}'.format(name))
-        start_bot(id,name,colors)
+        start_bot(id,name,colors, timeout)
     else:
-        bot_answer(driver,colors)
+        bot_answer(driver,colors, timeout)
 
-def bot_answer(driver,colors,q=0):
+
+def bot_answer(driver, colors, timeout, q=0):
     print('[info] Bot started.')
     driver.switch_to.frame(driver.find_element_by_tag_name("iframe"))
     lookuptable = {'red':'.quiz-board > button:nth-of-type(1)', 'blue':'.quiz-board > button:nth-of-type(2)',\
@@ -73,7 +73,7 @@ def bot_answer(driver,colors,q=0):
     for i in range(len(colors)):
         print('[info] Question ' ,i+1+q)
         try:
-            waitForItem(driver, "div#app",timeout=30)
+            waitForItem(driver, "div#app",timeout=timeout)
             driver.find_element_by_css_selector(lookuptable[colors[i]]).click()
             print('[info] Chose ' + colors[i])
         except ElementNotVisibleException:

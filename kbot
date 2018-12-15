@@ -9,6 +9,7 @@ kbot GAMEID (GAMEPIN) (USERNAME)
 EMAIL = ""
 PASSWORD = ""
 NAME = "KBOT"
+TIMEOUT = 30
 COLOR1 = "\033[1;37m" #questions
 COLOR2 = "\033[0m" #lines
 COLOR3 = "\033[0;34m" #answers
@@ -20,7 +21,7 @@ if len(sys.argv) == 4:
 if len(sys.argv) >= 3:
     qanda, colors = kahootlib.get_details(sys.argv[1],EMAIL,PASSWORD)
     print('{} answers received.'.format(len(colors)))
-    kahootlib.start_bot(sys.argv[2],NAME,colors)
+    kahootlib.start_bot(sys.argv[2],NAME,colors, TIMEOUT)
 elif len(sys.argv) == 2:
     qanda, colors = kahootlib.get_details(sys.argv[1],EMAIL,PASSWORD)
     i = 0
