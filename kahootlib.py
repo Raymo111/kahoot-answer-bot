@@ -14,7 +14,7 @@ from selenium.common.exceptions import TimeoutException, ElementNotVisibleExcept
 def waitForItem(driver, css, timeout=10):
     WebDriverWait(driver, timeout).until(expected_conditions.visibility_of_element_located((By.CSS_SELECTOR, css)))
 
-def get_details(kahootid, email='kahootbot28@gmail.com', passwd='botkahoot28'):
+def get_details(kahootid, email, passwd):
     authparams = {'username':email,'password':passwd,'grant_type':'password'}
     print('[info] trying to authenticate')
     data = requests.post('https://create.kahoot.it/rest/authenticate', \
