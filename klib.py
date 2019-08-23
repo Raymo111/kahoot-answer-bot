@@ -1,10 +1,13 @@
-import requests
-import json
-import time
-from py_mini_racer import py_mini_racer # run JS
-import re
-import base64
-import aiocometd # websocket
+import requests, json, time, re, base64, os
+
+try:
+    import aiocometd
+    from py_mini_racer import py_mini_racer
+    import requests
+except ModuleNotFoundError:
+    if "y" in input("Install dependencies? [Y/n] > ").lower():
+        os.system('python3 -m pip install -r requirements.txt')
+
 import asyncio
 import urllib.parse
 from difflib import SequenceMatcher
@@ -14,11 +17,12 @@ class Kahoot:
         self.pin = pin
         self.username = username
         self.client = requests.session()
-        self.captchaToken = "KAHOOT_TOKEN_eyJ2ZXJzaW9uIjoiIn0="  # This will work until they add the version to code. https://repl.it/repls/WholeCrimsonFlashdrives
+        self.captchaToken = "KAHOOT_TOKEN_eyJ2ZXJzaW9uIjoiIn0="
+        # This will work until they add the version to code. https://repl.it/repls/WholeCrimsonFlashdrives
         self.authToken = None
         self.answers = None
         self.loadCodes()
-
+    
     def _check_auth(f):
         def wrapper(self, *args, **kwargs):
             if not self.authToken:
@@ -51,7 +55,6 @@ class Kahoot:
             await client.subscribe("/service/status")
             await client.publish('/service/controller', 
             {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": self.username, "type": "login"})
-            nonQuizQuestions = 0
             colors = {0: "RED", 1: "BLUE", 2:"YELLOW", 3:"GREEN"}
             async for rawMessage in client:
                 message = rawMessage['data']
