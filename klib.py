@@ -1,11 +1,13 @@
 import requests
 import json
+import time
 from py_mini_racer import py_mini_racer # run JS
 import re
 import base64
 import aiocometd # websocket
 import asyncio
 import urllib.parse
+from difflib import SequenceMatcher
 
 class Kahoot:
     def __init__(self, pin, username):
@@ -48,7 +50,7 @@ class Kahoot:
             await client.subscribe("/service/player")
             await client.subscribe("/service/status")
             await client.publish('/service/controller', 
-            {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": name, "type": "login"})
+            {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": self.username, "type": "login"})
             nonQuizQuestions = 0
             colors = {0: "RED", 1: "BLUE", 2:"YELLOW", 3:"GREEN"}
             async for rawMessage in client:
@@ -92,18 +94,45 @@ class Kahoot:
 
     @_check_auth
     async def searchQuiz(self, name, maxCount=5):
-        name = name.replace("\\'","'")
+        print(name)
+        name = self._remove_emojis(name.replace("\\'","'"))
         url = 'https://create.kahoot.it/rest/kahoots/'
-        params = {'query': name, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevence', 'searchCluster': 1, 'includeExtendedCounters': False}
+        params = {'query': name, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
         resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
         if resp.status_code != 200:
             raise KahootError("Something went wrong searching quizzes.")
         quizzes = resp.json()['entities']
+        highestPair = {"score": 0}
         for quiz in quizzes:
-            if quiz['card']['title'] == name:
+            title = quiz['card']['title']
+            if title == name:
                 return quiz['card']['uuid']
-        raise KahootError("No quiz found. (private?)")
+            else:
+                similarity = self._similar(name, title)
+                if similarity > highestPair['score']:
+                    highestPair = {"score": similarity, "name": title, "uuid": quiz['card']['uuid']}
+        
+        # Try to salvage pair.
+        print(f'Exact match not found. These have {round(highestPair["score"] * 100,2)}% similarity:\n{name}\n{highestPair["name"]}')
+        answer = input('Proceed? [Y/n] > ').lower()
+        if "y" in answer:
+            return highestPair['uuid']
 
+        # Otherwise Panic
+        raise KahootError("No quiz found. (private?)")
+    @staticmethod
+    def _remove_emojis(text):
+        # https://stackoverflow.com/questions/33404752/removing-emojis-from-a-string-in-python/33417311
+        emoji_pattern = re.compile("["
+            u"\U0001F600-\U0001F64F"  # emoticons
+            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+            u"\U0001F680-\U0001F6FF"  # transport & map symbols
+            u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+            "]+", flags=re.UNICODE)
+        return emoji_pattern.sub(r'', text)
+    @staticmethod
+    def _similar(a, b):
+        return SequenceMatcher(None, a, b).ratio()
     @_check_auth
     async def findAnswers(self, quizID=None, name=None):
         if not quizID and name:

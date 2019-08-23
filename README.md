@@ -23,7 +23,9 @@ Does not work when:
   + Generally just a `brew install python3`
 * py_mini_racer
 * aiocometd
-  
+* getpass
+* asyncio
+* urllib
 ## Questions?
  + please open an issue
  

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import klib
+import getpass
 if __name__ == "__main__":
     pin = input("pin > ")
     name = input('name > ')
     email = input('email > ')
-    password = input('password > ')
+    password = getpass.getpass('password > ')
     user = klib.Kahoot(pin, name)
     user.authenticate(email, password)
     user.checkPin()
