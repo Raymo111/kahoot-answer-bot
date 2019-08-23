@@ -1,33 +1,11 @@
 #!/usr/bin/env python3
-import kahootlib
-import sys
-
-USAGE = '''
-kbot GAMEID 
-kbot GAMEID (GAMEPIN) (USERNAME)
-'''
-EMAIL = ""
-PASSWORD = ""
-NAME = "KBOT"
-TIMEOUT = 30
-COLOR1 = "\033[1;37m" #questions
-COLOR2 = "\033[0m" #lines
-COLOR3 = "\033[0;34m" #answers
-if sys.platform == 'win32':
-    COLOR1, COLOR2, COLOR3 = "","",""
-if len(sys.argv) == 4:
-    NAME = sys.argv[3]
-
-if len(sys.argv) >= 3:
-    qanda, colors = kahootlib.get_details(sys.argv[1],EMAIL,PASSWORD)
-    print('{} answers received.'.format(len(colors)))
-    kahootlib.start_bot(sys.argv[2],NAME,colors, TIMEOUT)
-elif len(sys.argv) == 2:
-    qanda, colors = kahootlib.get_details(sys.argv[1],EMAIL,PASSWORD)
-    i = 0
-    for key in qanda:
-        print('{}{:100s}{}  |  {}{:6s}{} |  {}{:3d}{}  |'.format(COLOR1,key,COLOR2,COLOR1,colors[i],COLOR2,COLOR1,i+1,COLOR2))
-        print('{}{:100s}{}  |         |       |'.format(COLOR3,qanda[key],COLOR2))
-        i += 1
-else:
-    print(USAGE)
+import klib
+if __name__ == "__main__":
+    pin = input("pin > ")
+    name = input('name > ')
+    email = input('email > ')
+    password = input('password > ')
+    user = klib.Kahoot(pin, name)
+    user.authenticate(email, password)
+    user.checkPin()
+    user.startGame()
