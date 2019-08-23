@@ -1,4 +1,6 @@
 # The Amazing Automatic Kahoot Bot (kbot)
+
+### *now with functional code*
 People have made bots and things for kahoot in the past, but this is
 a new and improved edition that actually does
 everything for you. This one actually answers the questions, unlike
