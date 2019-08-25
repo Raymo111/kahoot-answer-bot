@@ -2,11 +2,14 @@
 import klib
 import getpass
 if __name__ == "__main__":
-    pin = input("pin > ")
-    name = input('name > ')
-    email = input('email > ')
-    password = getpass.getpass('password > ')
-    user = klib.Kahoot(pin, name)
-    user.authenticate(email, password)
-    user.checkPin()
-    user.startGame()
+    try:
+        pin = input("pin > ")
+        name = input('name > ')
+        email = input('email > ')
+        password = getpass.getpass('password > ')
+        user = klib.Kahoot(pin, name)
+        user.authenticate(email, password)
+        user.checkPin()
+        user.startGame()
+    except KeyboardInterrupt:
+        pass
