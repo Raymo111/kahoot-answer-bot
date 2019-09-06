@@ -56,13 +56,17 @@ class Kahoot:
             await client.publish('/service/controller', 
             {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": self.username, "type": "login"})
             colors = {0: "RED", 1: "BLUE", 2:"YELLOW", 3:"GREEN"}
+            offset = 0
             async for rawMessage in client:
                 message = rawMessage['data']
                 if 'error' in message:
                     raise KahootError(message['description'])
                 if 'id' in message:
                     data = json.loads(message['content'])
-                    kind = self.lookup[message['id']]
+                    kind = ''
+                    if message['id'] in self.lookup:
+                        kind = self.lookup[message['id']]
+                    
                     if kind == 'START_QUIZ':
                         quizName = data['quizName']
                         self.answers = await self.findAnswers(name=quizName)
@@ -72,13 +76,15 @@ class Kahoot:
                         if data['gameBlockType'] != 'quiz':
                             pass
                         elif self.answers:
-                            correct = self.answers[data['questionIndex']]['index']
+                            correct = self.answers[data['questionIndex'] + offset]['index']
                             print(f'SELECTED {colors[correct]}')
                             await self.sendAnswer(correct)
                         else:
                             print('SELECTED FALLBACK')
                             await self.sendAnswer(1)
                     elif kind == 'TIME_UP':
+                        print('DID NOT ANSWER IN TIME, SKIPPING TO NEXT ANSWER')
+                        offset += 1
                         pass
                     elif kind == 'RESET_CONTROLLER' or kind == 'GAME_OVER':
                         await client.close()
@@ -92,8 +98,7 @@ class Kahoot:
             "gameid": self.pin,
             "host": "kahoot.it",
             "type": "message",
-            "id": 45}
-            )
+            "id": 45})
 
     @_check_auth
     async def searchQuiz(self, name, maxCount=5):
@@ -110,10 +115,9 @@ class Kahoot:
             title = quiz['card']['title']
             if title == name:
                 return quiz['card']['uuid']
-            else:
-                similarity = self._similar(name, title)
-                if similarity > highestPair['score']:
-                    highestPair = {"score": similarity, "name": title, "uuid": quiz['card']['uuid']}
+            similarity = self._similar(name, title)
+            if similarity > highestPair['score']:
+                highestPair = {"score": similarity, "name": title, "uuid": quiz['card']['uuid']}
         
         # Try to salvage pair.
         print(f'Exact match not found. These have {round(highestPair["score"] * 100,2)}% similarity:\n{name}\n{highestPair["name"]}')
@@ -152,11 +156,11 @@ class Kahoot:
             foundAnswer = False
             if question['type'] != 'quiz':
                 answers.append({'NOT A':'QUESTION'})
-            else:
-                for i in range(question['numberOfAnswers']):
-                    if question['choices'][i]['correct'] and not foundAnswer:
-                        foundAnswer = True
-                        answers.append({'question': question['question'], 'index': i, 'answer': question['choices'][i]['answer']})
+                continue
+            for i in range(question['numberOfAnswers']):
+                if question['choices'][i]['correct'] and not foundAnswer:
+                    foundAnswer = True
+                    answers.append({'question': question['question'], 'index': i, 'answer': question['choices'][i]['answer']})
         return answers
 
     def checkPin(self):
@@ -170,6 +174,7 @@ class Kahoot:
         self.sessionID = self.solveChallenge(resp.json()["challenge"])
 
     def solveChallenge(self, text):
+        # Rebuilt Javascript so engine can solve it
         text = re.split("{|}|;", text)
         replaceFunction = "return message.replace(/./g, function(char, position) {"
         rebuilt = [text[1] + "{", text[2] + ";", replaceFunction, text[9] + ";})};", text[0]]
