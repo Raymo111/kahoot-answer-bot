@@ -48,7 +48,7 @@ class Kahoot:
 
     async def _play(self):
         url = f'wss://play.kahoot.it/cometd/{self.pin}/{self.sessionID}'
-        async with aiocometd.Client(url) as client:
+        async with aiocometd.Client(url,ssl=False) as client:
             self.socket = client
             await client.subscribe("/service/controller")
             await client.subscribe("/service/player")
