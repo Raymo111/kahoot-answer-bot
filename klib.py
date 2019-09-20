@@ -1,10 +1,13 @@
-import requests
-import json
-import time
-from py_mini_racer import py_mini_racer # run JS
-import re
-import base64
-import aiocometd # websocket
+import requests, json, time, re, base64, os
+
+try:
+    import aiocometd
+    from py_mini_racer import py_mini_racer
+    import requests
+except ModuleNotFoundError:
+    if "y" in input("Install dependencies? [Y/n] > ").lower():
+        os.system('python3 -m pip install -r requirements.txt')
+
 import asyncio
 import urllib.parse
 from difflib import SequenceMatcher
@@ -14,11 +17,12 @@ class Kahoot:
         self.pin = pin
         self.username = username
         self.client = requests.session()
-        self.captchaToken = "KAHOOT_TOKEN_eyJ2ZXJzaW9uIjoiIn0="  # This will work until they add the version to code. https://repl.it/repls/WholeCrimsonFlashdrives
+        self.captchaToken = "KAHOOT_TOKEN_eyJ2ZXJzaW9uIjoiIn0="
+        # This will work until they add the version to code. https://repl.it/repls/WholeCrimsonFlashdrives
         self.authToken = None
         self.answers = None
         self.loadCodes()
-
+    
     def _check_auth(f):
         def wrapper(self, *args, **kwargs):
             if not self.authToken:
@@ -44,22 +48,25 @@ class Kahoot:
 
     async def _play(self):
         url = f'wss://play.kahoot.it/cometd/{self.pin}/{self.sessionID}'
-        async with aiocometd.Client(url) as client:
+        async with aiocometd.Client(url,ssl=False) as client:
             self.socket = client
             await client.subscribe("/service/controller")
             await client.subscribe("/service/player")
             await client.subscribe("/service/status")
             await client.publish('/service/controller', 
             {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": self.username, "type": "login"})
-            nonQuizQuestions = 0
             colors = {0: "RED", 1: "BLUE", 2:"YELLOW", 3:"GREEN"}
+            offset = 0
             async for rawMessage in client:
                 message = rawMessage['data']
                 if 'error' in message:
                     raise KahootError(message['description'])
                 if 'id' in message:
                     data = json.loads(message['content'])
-                    kind = self.lookup[message['id']]
+                    kind = ''
+                    if message['id'] in self.lookup:
+                        kind = self.lookup[message['id']]
+                    
                     if kind == 'START_QUIZ':
                         quizName = data['quizName']
                         self.answers = await self.findAnswers(name=quizName)
@@ -69,13 +76,15 @@ class Kahoot:
                         if data['gameBlockType'] != 'quiz':
                             pass
                         elif self.answers:
-                            correct = self.answers[data['questionIndex']]['index']
+                            correct = self.answers[data['questionIndex'] + offset]['index']
                             print(f'SELECTED {colors[correct]}')
                             await self.sendAnswer(correct)
                         else:
                             print('SELECTED FALLBACK')
                             await self.sendAnswer(1)
                     elif kind == 'TIME_UP':
+                        print('DID NOT ANSWER IN TIME, SKIPPING TO NEXT ANSWER')
+                        offset += 1
                         pass
                     elif kind == 'RESET_CONTROLLER' or kind == 'GAME_OVER':
                         await client.close()
@@ -89,8 +98,7 @@ class Kahoot:
             "gameid": self.pin,
             "host": "kahoot.it",
             "type": "message",
-            "id": 45}
-            )
+            "id": 45})
 
     @_check_auth
     async def searchQuiz(self, name, maxCount=5):
@@ -107,10 +115,9 @@ class Kahoot:
             title = quiz['card']['title']
             if title == name:
                 return quiz['card']['uuid']
-            else:
-                similarity = self._similar(name, title)
-                if similarity > highestPair['score']:
-                    highestPair = {"score": similarity, "name": title, "uuid": quiz['card']['uuid']}
+            similarity = self._similar(name, title)
+            if similarity > highestPair['score']:
+                highestPair = {"score": similarity, "name": title, "uuid": quiz['card']['uuid']}
         
         # Try to salvage pair.
         print(f'Exact match not found. These have {round(highestPair["score"] * 100,2)}% similarity:\n{name}\n{highestPair["name"]}')
@@ -149,11 +156,11 @@ class Kahoot:
             foundAnswer = False
             if question['type'] != 'quiz':
                 answers.append({'NOT A':'QUESTION'})
-            else:
-                for i in range(question['numberOfAnswers']):
-                    if question['choices'][i]['correct'] and not foundAnswer:
-                        foundAnswer = True
-                        answers.append({'question': question['question'], 'index': i, 'answer': question['choices'][i]['answer']})
+                continue
+            for i in range(question['numberOfAnswers']):
+                if question['choices'][i]['correct'] and not foundAnswer:
+                    foundAnswer = True
+                    answers.append({'question': question['question'], 'index': i, 'answer': question['choices'][i]['answer']})
         return answers
 
     def checkPin(self):
@@ -167,6 +174,7 @@ class Kahoot:
         self.sessionID = self.solveChallenge(resp.json()["challenge"])
 
     def solveChallenge(self, text):
+        # Rebuilt Javascript so engine can solve it
         text = re.split("{|}|;", text)
         replaceFunction = "return message.replace(/./g, function(char, position) {"
         rebuilt = [text[1] + "{", text[2] + ";", replaceFunction, text[9] + ";})};", text[0]]
