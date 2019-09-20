@@ -19,6 +19,17 @@ some other tools and spammers.
   - `python3 -m pip install -r requirements.txt`
 - [ ] Run Program
   - `python3 kbot`
+
+## Program arguments
+
+```
+python3 kbot
+  --email XYZ@gmail.com 
+  --password XYZ
+```
+
+Please open a pull request or issue if you would like more functionality.
+
 ## How does it work?
 
 Intercepts and pretends to be a kahoot client. After receiving quiz name from host, looks up answers for quiz and uses them.
