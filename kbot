@@ -9,14 +9,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
     email = args.email
     password = args.password
-    if not email:
-        email = input('email > ')
-    elif not password:
-        password = getpass.getpass('password > ')
 
-    pin = input("pin > ")
-    name = input('name > ')
-    user = klib.Kahoot(pin, name)
-    user.authenticate(email, password)
-    user.checkPin()
-    user.startGame()
+    try:
+        if not email:
+            email = input('email > ')
+        elif not password:
+            password = getpass.getpass('password > ')
+
+        pin = input("pin > ")
+        name = input('name > ')
+        user = klib.Kahoot(pin, name)
+        user.authenticate(email, password)
+        user.checkPin()
+        user.startGame()
+    except KeyboardInterrupt:
+        print('EXITING...')
+        exit()
