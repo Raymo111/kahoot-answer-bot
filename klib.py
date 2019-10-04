@@ -5,7 +5,7 @@ try:
     from py_mini_racer import py_mini_racer
     import requests
 except ModuleNotFoundError:
-    if "y" in input("Install dependencies? [Y/n] > ").lower():
+    if "y" in input("Install dependencies? [y/N] > ").lower():
         os.system('python3 -m pip install -r requirements.txt')
 
 import asyncio
