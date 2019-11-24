@@ -83,8 +83,8 @@ class Kahoot:
                             print('SELECTED FALLBACK')
                             await self.sendAnswer(1)
                     elif kind == 'TIME_UP':
-                        print('DID NOT ANSWER IN TIME, SKIPPING TO NEXT ANSWER')
-                        offset += 1
+                        # print('DID NOT ANSWER IN TIME, SKIPPING TO NEXT ANSWER')
+                        # offset += 1
                         pass
                     elif kind == 'RESET_CONTROLLER' or kind == 'GAME_OVER':
                         await client.close()
@@ -175,9 +175,11 @@ class Kahoot:
 
     def solveChallenge(self, text):
         # Rebuilt Javascript so engine can solve it
+        text = text.replace('\t','',-1).encode('ascii', 'ignore').decode('utf-8')
         text = re.split("{|}|;", text)
         replaceFunction = "return message.replace(/./g, function(char, position) {"
-        rebuilt = [text[1] + "{", text[2] + ";", replaceFunction, text[9] + ";})};", text[0]]
+        rebuilt = [text[1] + "{", text[2] + ";", replaceFunction, text[7] + ";})};", text[0]]
+        
         jsEngine = py_mini_racer.MiniRacer()
         solution = jsEngine.eval("".join(rebuilt))
         return self._shiftBits(solution)
