@@ -157,10 +157,10 @@ class Kahoot:
             if question['type'] != 'quiz':
                 answers.append({'NOT A':'QUESTION'})
                 continue
-            for i in range(question['numberOfAnswers']):
-                if question['choices'][i]['correct'] and not foundAnswer:
+            for i, choice in enumerate(question['choices']):
+                if choice['correct'] and not foundAnswer:
                     foundAnswer = True
-                    answers.append({'question': question['question'], 'index': i, 'answer': question['choices'][i]['answer']})
+                    answers.append({'question': question['question'], 'index': i, 'answer': choice['answer']})
         return answers
 
     def checkPin(self):
