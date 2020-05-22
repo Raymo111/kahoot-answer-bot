@@ -1,4 +1,9 @@
-import requests, json, time, re, base64, os
+import requests
+import json
+import time
+import re
+import base64
+import os
 
 try:
     import aiocometd
@@ -12,6 +17,7 @@ import asyncio
 import urllib.parse
 from difflib import SequenceMatcher
 
+
 class Kahoot:
     def __init__(self, pin, username):
         self.pin = pin
@@ -22,7 +28,7 @@ class Kahoot:
         self.authToken = None
         self.answers = None
         self.loadCodes()
-    
+
     def _check_auth(f):
         def wrapper(self, *args, **kwargs):
             if not self.authToken:
@@ -48,14 +54,14 @@ class Kahoot:
 
     async def _play(self):
         url = f'wss://play.kahoot.it/cometd/{self.pin}/{self.sessionID}'
-        async with aiocometd.Client(url,ssl=False) as client:
+        async with aiocometd.Client(url, ssl=False) as client:
             self.socket = client
             await client.subscribe("/service/controller")
             await client.subscribe("/service/player")
             await client.subscribe("/service/status")
-            await client.publish('/service/controller', 
-            {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": self.username, "type": "login"})
-            colors = {0: "RED", 1: "BLUE", 2:"YELLOW", 3:"GREEN"}
+            await client.publish('/service/controller',
+                                 {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": self.username, "type": "login"})
+            colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
             offset = 0
             async for rawMessage in client:
                 message = rawMessage['data']
@@ -66,13 +72,14 @@ class Kahoot:
                     kind = ''
                     if message['id'] in self.lookup:
                         kind = self.lookup[message['id']]
-                    
+
                     if kind == 'START_QUIZ':
                         quizName = data['quizName']
-                        self.answers = await self.findAnswers(name=quizName)
+                        quizAnswers = data['quizQuestionAnswers']
+                        self.answers = await self.findAnswers(name=quizName, exceptedAnswers=quizAnswers)
                         print(f'ANSWERS RECEIVED')
                     elif kind == 'START_QUESTION':
-                        print('------',data['questionIndex']+1,'------')
+                        print('------', data['questionIndex']+1, '------')
                         if data['gameBlockType'] != 'quiz':
                             pass
                         elif self.answers:
@@ -89,73 +96,74 @@ class Kahoot:
                     elif kind == 'RESET_CONTROLLER' or kind == 'GAME_OVER':
                         await client.close()
                         exit()
-                    print(kind)
+                    print(kind.replace('_', ' '))
 
     async def sendAnswer(self, choice):
         choiceInfo = json.dumps({"choice": choice, "meta": {"lag": 0, "device": {"userAgent": "kbot", "screen": {"width": 1920, "height": 1080}}}})
-        await self.socket.publish("/service/controller", 
-            {"content": choiceInfo,
-            "gameid": self.pin,
-            "host": "kahoot.it",
-            "type": "message",
-            "id": 45})
+        await self.socket.publish("/service/controller",
+                                  {"content": choiceInfo,
+                                   "gameid": self.pin,
+                                   "host": "kahoot.it",
+                                   "type": "message",
+                                   "id": 45})
 
     @_check_auth
-    async def searchQuiz(self, name, maxCount=5):
-        print(name)
-        name = self._remove_emojis(name.replace("\\'","'"))
+    async def searchQuiz(self, name, exceptedAnswers=None, maxCount=20):
+        name = self._remove_emojis(name.replace("\\'", "'"))
         url = 'https://create.kahoot.it/rest/kahoots/'
         params = {'query': name, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
         resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
         if resp.status_code != 200:
             raise KahootError("Something went wrong searching quizzes.")
         quizzes = resp.json()['entities']
-        highestPair = {"score": 0}
         for quiz in quizzes:
             title = quiz['card']['title']
             if title == name:
-                return quiz['card']['uuid']
-            similarity = self._similar(name, title)
-            if similarity > highestPair['score']:
-                highestPair = {"score": similarity, "name": title, "uuid": quiz['card']['uuid']}
-        
-        # Try to salvage pair.
-        print(f'Exact match not found. These have {round(highestPair["score"] * 100,2)}% similarity:\n{name}\n{highestPair["name"]}')
-        answer = input('Proceed? [Y/n] > ').lower()
-        if "y" in answer:
-            return highestPair['uuid']
+                url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
+                resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
+                if resp.status_code == 400:
+                    raise KahootError("Invalid UUID.")
+                if resp.status_code != 200:
+                    raise KahootError("Something went wrong finding answers.")
+                if exceptedAnswers:
+                    if quiz['card']['number_of_questions'] == len(exceptedAnswers):
+                        isCorrectQuiz = True
+                        for q_index, question in enumerate(resp.json()['questions']):
+                            if len(question['choices']) != exceptedAnswers[q_index]:
+                                isCorrectQuiz = False
+                                break
+                        if isCorrectQuiz:
+                            return resp.json()
+                else:
+                    return resp.json()
 
         # Otherwise Panic
         raise KahootError("No quiz found. (private?)")
+
     @staticmethod
     def _remove_emojis(text):
         # https://stackoverflow.com/questions/33404752/removing-emojis-from-a-string-in-python/33417311
         emoji_pattern = re.compile("["
-            u"\U0001F600-\U0001F64F"  # emoticons
-            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-            u"\U0001F680-\U0001F6FF"  # transport & map symbols
-            u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-            "]+", flags=re.UNICODE)
+                                   u"\U0001F600-\U0001F64F"  # emoticons
+                                   u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                                   u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                                   u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                                   "]+", flags=re.UNICODE)
         return emoji_pattern.sub(r'', text)
+
     @staticmethod
     def _similar(a, b):
         return SequenceMatcher(None, a, b).ratio()
+
     @_check_auth
-    async def findAnswers(self, quizID=None, name=None):
-        if not quizID and name:
-            quizID = await self.searchQuiz(name)
-        url = f'https://create.kahoot.it/rest/kahoots/{quizID}'
-        
-        resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
-        if resp.status_code == 400:
-            raise KahootError("Invalid UUID.")
-        if resp.status_code != 200:
-            raise KahootError("Something went wrong finding answers.")
+    async def findAnswers(self, name, exceptedAnswers=None):
+        quizProperties = await self.searchQuiz(name, exceptedAnswers)
+
         answers = []
-        for question in resp.json()['questions']:
+        for question in quizProperties['questions']:
             foundAnswer = False
             if question['type'] != 'quiz':
-                answers.append({'NOT A':'QUESTION'})
+                answers.append({'NOT A': 'QUESTION'})
                 continue
             for i, choice in enumerate(question['choices']):
                 if choice['correct'] and not foundAnswer:
@@ -175,11 +183,11 @@ class Kahoot:
 
     def solveChallenge(self, text):
         # Rebuilt Javascript so engine can solve it
-        text = text.replace('\t','',-1).encode('ascii', 'ignore').decode('utf-8')
+        text = text.replace('\t', '', -1).encode('ascii', 'ignore').decode('utf-8')
         text = re.split("{|}|;", text)
         replaceFunction = "return message.replace(/./g, function(char, position) {"
         rebuilt = [text[1] + "{", text[2] + ";", replaceFunction, text[7] + ";})};", text[0]]
-        
+
         jsEngine = py_mini_racer.MiniRacer()
         solution = jsEngine.eval("".join(rebuilt))
         return self._shiftBits(solution)
@@ -230,4 +238,3 @@ class Kahoot:
 
 class KahootError(Exception):
     pass
-
