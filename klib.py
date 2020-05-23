@@ -109,7 +109,6 @@ class Kahoot:
 
     @_check_auth
     async def searchQuiz(self, name, exceptedAnswers=None, maxCount=20):
-        name = self._remove_emojis(name.replace("\\'", "'"))
         url = 'https://create.kahoot.it/rest/kahoots/'
         params = {'query': name, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
         resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
