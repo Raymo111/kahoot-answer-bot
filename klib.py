@@ -157,7 +157,6 @@ class Kahoot:
     @_check_auth
     async def findAnswers(self, name, exceptedAnswers=None):
         quizProperties = await self.searchQuiz(name, exceptedAnswers)
-
         answers = []
         for question in quizProperties['questions']:
             foundAnswer = False
