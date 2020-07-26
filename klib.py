@@ -134,14 +134,22 @@ class Kahoot:
 					print(resp)  # DEBUG
 					return resp.json()
 		else:
+			print("No excepted answers")  # DEBUG
 			print(resp)  # DEBUG
 			return resp.json()
 
 	@_check_auth
 	async def searchQuiz(self, exceptedAnswers=None, maxCount=20):
+		print("Searching for quiz...")  # DEBUG
+		print(self.quizName)  # DEBUG
+		print(self.quizID)  # DEBUG
 		if self.quizID:
 			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
-			return await self.getQuiz(self, url, exceptedAnswers)
+			print(url)  # DEBUG
+			quiz = await self.getQuiz(self, url, exceptedAnswers)
+			print("quiz:")  # DEBUG
+			print(quiz)  # DEBUG
+			return quiz
 		elif self.quizName:
 			url = 'https://create.kahoot.it/rest/kahoots/'
 			params = {'query': self.quizName, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance',

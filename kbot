@@ -36,9 +36,10 @@ if __name__ == "__main__":
 			pin = input('pin > ')
 		if nameOrID():
 			quizName = input('quizName > ')
+			user = klib.Kahoot(pin, name, quizName=quizName)
 		else:
 			quizID = input('quizID > ')
-		user = klib.Kahoot(pin, name)
+			user = klib.Kahoot(pin, name, quizID=quizID)
 		user.authenticate(email, password)
 		user.checkPin()
 		user.startGame()
