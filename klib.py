@@ -19,9 +19,11 @@ from difflib import SequenceMatcher
 
 
 class Kahoot:
-	def __init__(self, pin, username):
+	def __init__(self, pin, username, quizName=None, quizID=None):
 		self.pin = pin
 		self.username = username
+		self.quizName = quizName
+		self.quizID = quizID
 		self.client = requests.session()
 		self.captchaToken = "KAHOOT_TOKEN_eyJ2ZXJzaW9uIjoiIn0="
 		# This will work until they add the version to code. https://repl.it/repls/WholeCrimsonFlashdrives
@@ -79,9 +81,8 @@ class Kahoot:
 
 					if kind == 'START_QUIZ':
 						print(data)  # DEBUG
-						quizName = data['quizName']
 						quizAnswers = data['quizQuestionAnswers']
-						self.answers = await self.findAnswers(name=quizName, exceptedAnswers=quizAnswers)
+						self.answers = await self.findAnswers(self.quizName, self.quizID, exceptedAnswers=quizAnswers)
 						print(f'ANSWERS RECEIVED')
 					elif kind == 'START_QUESTION':
 						print('------', data['questionIndex'] + 1, '------')
@@ -115,7 +116,7 @@ class Kahoot:
 		                           "id": 45})
 
 	@_check_auth
-	async def searchQuiz(self, name, exceptedAnswers=None, maxCount=20):
+	async def searchQuiz(self, name=None, id=None, exceptedAnswers=None, maxCount=20):
 		url = 'https://create.kahoot.it/rest/kahoots/'
 		params = {'query': name, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance',
 		          'searchCluster': 1, 'includeExtendedCounters': False}
@@ -124,9 +125,12 @@ class Kahoot:
 			raise KahootError("Something went wrong searching quizzes.")
 		quizzes = resp.json()['entities']
 		for quiz in quizzes:
-			title = quiz['card']['title']
-			if title == name:
-				url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
+
+			if (name and quiz['card']['title'] == name) or id:
+				if name:
+					url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
+				elif id:
+					url = f'https://create.kahoot.it/rest/kahoots/{id}'
 				resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
 				if resp.status_code == 400:
 					raise KahootError("Invalid UUID.")
@@ -163,9 +167,10 @@ class Kahoot:
 		return SequenceMatcher(None, a, b).ratio()
 
 	@_check_auth
-	async def findAnswers(self, name, exceptedAnswers=None):
-		quizProperties = await self.searchQuiz(name, exceptedAnswers)
+	async def findAnswers(self, name=None, id=None, exceptedAnswers=None):
+		quizProperties = await self.searchQuiz(name, id, exceptedAnswers)
 		answers = []
+		print(quizProperties)  # DEBUG
 		for question in quizProperties['questions']:
 			foundAnswer = False
 			if question['type'] != 'quiz':

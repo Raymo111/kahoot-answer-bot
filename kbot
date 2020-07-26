@@ -3,6 +3,16 @@ import klib
 import getpass
 import argparse
 
+
+def nameOrID():
+	while "the answer is invalid":
+		reply = str(input("quizName or quizID? [n/i] > ")).lower().strip()
+		if reply[:1] == 'n':
+			return True
+		if reply[:1] == 'i':
+			return False
+
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--email", help="The email used to login to create.kahoot.it")
@@ -24,7 +34,10 @@ if __name__ == "__main__":
 			name = input('name > ')
 		if not pin:
 			pin = input('pin > ')
-
+		if nameOrID():
+			quizName = input('quizName > ')
+		else:
+			quizID = input('quizID > ')
 		user = klib.Kahoot(pin, name)
 		user.authenticate(email, password)
 		user.checkPin()
