@@ -6,19 +6,25 @@ import argparse
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--email", help="The email used to login to create.kahoot.it")
-	parser.add_argument("--password", help="The corrosponding password used to login to create.kahoot.it")
+	parser.add_argument("--password", help="The corresponding password used to login to create.kahoot.it")
+	parser.add_argument("--name", help="The name to join the kahoot with")
+	parser.add_argument("--pin", help="The game pin")
 	args = parser.parse_args()
 	email = args.email
 	password = args.password
+	name = args.name
+	pin = args.pin
 
 	try:
 		if not email:
 			email = input('email > ')
-		elif not password:
+		if not password:
 			password = getpass.getpass('password > ')
+		if not name:
+			name = input('name > ')
+		if not pin:
+			pin = input('pin > ')
 
-		pin = input("pin > ")
-		name = input('name > ')
 		user = klib.Kahoot(pin, name)
 		user.authenticate(email, password)
 		user.checkPin()
