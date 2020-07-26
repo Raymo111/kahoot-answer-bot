@@ -82,7 +82,7 @@ class Kahoot:
 					if kind == 'START_QUIZ':
 						print(data)  # DEBUG
 						quizAnswers = data['quizQuestionAnswers']
-						self.answers = await self.findAnswers(self.quizName, self.quizID, exceptedAnswers=quizAnswers)
+						self.answers = await self.findAnswers(exceptedAnswers=quizAnswers)
 						print(f'ANSWERS RECEIVED')
 					elif kind == 'START_QUESTION':
 						print('------', data['questionIndex'] + 1, '------')
@@ -116,37 +116,44 @@ class Kahoot:
 		                           "id": 45})
 
 	@_check_auth
-	async def searchQuiz(self, name=None, id=None, exceptedAnswers=None, maxCount=20):
-		url = 'https://create.kahoot.it/rest/kahoots/'
-		params = {'query': name, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance',
-		          'searchCluster': 1, 'includeExtendedCounters': False}
-		resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
+	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None):
+		resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
+		if resp.status_code == 400:
+			raise KahootError("Invalid UUID.")
 		if resp.status_code != 200:
-			raise KahootError("Something went wrong searching quizzes.")
-		quizzes = resp.json()['entities']
-		for quiz in quizzes:
-
-			if (name and quiz['card']['title'] == name) or id:
-				if name:
-					url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
-				elif id:
-					url = f'https://create.kahoot.it/rest/kahoots/{id}'
-				resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
-				if resp.status_code == 400:
-					raise KahootError("Invalid UUID.")
-				if resp.status_code != 200:
-					raise KahootError("Something went wrong finding answers.")
-				if exceptedAnswers:
-					if quiz['card']['number_of_questions'] == len(exceptedAnswers):
-						isCorrectQuiz = True
-						for q_index, question in enumerate(resp.json()['questions']):
-							if len(question['choices']) != exceptedAnswers[q_index]:
-								isCorrectQuiz = False
-								break
-						if isCorrectQuiz:
-							return resp.json()
-				else:
+			raise KahootError("Something went wrong finding answers.")
+		if exceptedAnswers:
+			if actualAnswers == len(exceptedAnswers):
+				isCorrectQuiz = True
+				for q_index, question in enumerate(resp.json()['questions']):
+					if len(question['choices']) != exceptedAnswers[q_index]:
+						isCorrectQuiz = False
+						break
+				if isCorrectQuiz:
+					print("isCorrectQuiz")  # DEBUG
+					print(resp)  # DEBUG
 					return resp.json()
+		else:
+			print(resp)  # DEBUG
+			return resp.json()
+
+	@_check_auth
+	async def searchQuiz(self, exceptedAnswers=None, maxCount=20):
+		if self.quizID:
+			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
+			return await self.getQuiz(self, url, exceptedAnswers)
+		elif self.quizName:
+			url = 'https://create.kahoot.it/rest/kahoots/'
+			params = {'query': self.quizName, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance',
+			          'searchCluster': 1, 'includeExtendedCounters': False}
+			resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
+			if resp.status_code != 200:
+				raise KahootError("Something went wrong searching quizzes.")
+			quizzes = resp.json()['entities']
+			for quiz in quizzes:
+				if quiz['card']['title'] == self.quizName:
+					url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
+					return await self.getQuiz(self, url, exceptedAnswers, quiz['card']['number_of_questions'])
 
 				# Otherwise Panic
 				raise KahootError("No quiz found. (private?)")
@@ -167,8 +174,8 @@ class Kahoot:
 		return SequenceMatcher(None, a, b).ratio()
 
 	@_check_auth
-	async def findAnswers(self, name=None, id=None, exceptedAnswers=None):
-		quizProperties = await self.searchQuiz(name, id, exceptedAnswers)
+	async def findAnswers(self, exceptedAnswers=None):
+		quizProperties = await self.searchQuiz(exceptedAnswers)
 		answers = []
 		print(quizProperties)  # DEBUG
 		for question in quizProperties['questions']:
