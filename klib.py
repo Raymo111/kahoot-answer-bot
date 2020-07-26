@@ -105,14 +105,11 @@ class Kahoot:
 					print(kind.replace('_', ' '))
 
 	async def sendAnswer(self, choice):
-		choiceInfo = json.dumps({"choice": choice, "meta": {"lag": 0, "device": {"userAgent": "kbot",
-		                                                                         "screen": {"width": 1920,
-		                                                                                    "height": 1080}}}})
+		choiceInfo = json.dumps(
+			{"choice": choice,
+			 "meta": {"lag": 0, "device": {"userAgent": "kbot", "screen": {"width": 1920, "height": 1080}}}})
 		await self.socket.publish("/service/controller",
-		                          {"content": choiceInfo,
-		                           "gameid": self.pin,
-		                           "host": "kahoot.it",
-		                           "type": "message",
+		                          {"content": choiceInfo, "gameid": self.pin, "host": "kahoot.it", "type": "message",
 		                           "id": 45})
 
 	@_check_auth
@@ -133,6 +130,7 @@ class Kahoot:
 					print("isCorrectQuiz")  # DEBUG
 					print(resp)  # DEBUG
 					return resp.json()
+			print("Wrong num of expected answers")  # DEBUG
 		else:
 			print("No excepted answers")  # DEBUG
 			print(resp)  # DEBUG
@@ -152,8 +150,8 @@ class Kahoot:
 			return quiz
 		elif self.quizName:
 			url = 'https://create.kahoot.it/rest/kahoots/'
-			params = {'query': self.quizName, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance',
-			          'searchCluster': 1, 'includeExtendedCounters': False}
+			params = {'query': self.quizName, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '',
+			          'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
 			resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
 			if resp.status_code != 200:
 				raise KahootError("Something went wrong searching quizzes.")
