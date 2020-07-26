@@ -2,26 +2,27 @@
 import klib
 import getpass
 import argparse
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--email",help="The email used to login to create.kahoot.it")
-    parser.add_argument("--password",help="The corrosponding password used to login to create.kahoot.it")
-    args = parser.parse_args()
-    email = args.email
-    password = args.password
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--email", help="The email used to login to create.kahoot.it")
+	parser.add_argument("--password", help="The corrosponding password used to login to create.kahoot.it")
+	args = parser.parse_args()
+	email = args.email
+	password = args.password
 
-    try:
-        if not email:
-            email = input('email > ')
-        elif not password:
-            password = getpass.getpass('password > ')
+	try:
+		if not email:
+			email = input('email > ')
+		elif not password:
+			password = getpass.getpass('password > ')
 
-        pin = input("pin > ")
-        name = input('name > ')
-        user = klib.Kahoot(pin, name)
-        user.authenticate(email, password)
-        user.checkPin()
-        user.startGame()
-    except KeyboardInterrupt:
-        print('EXITING...')
-        exit()
+		pin = input("pin > ")
+		name = input('name > ')
+		user = klib.Kahoot(pin, name)
+		user.authenticate(email, password)
+		user.checkPin()
+		user.startGame()
+	except KeyboardInterrupt:
+		print('EXITING...')
+		exit()
