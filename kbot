@@ -30,26 +30,26 @@ if __name__ == "__main__":
 	quizName = args.quizID
 
 	try:
-		if not email:
-			email = input('email > ')
-		if not password:
-			password = getpass.getpass('password > ')
 		if not name:
 			name = input('name > ')
 		if not pin:
 			pin = input('pin > ')
-		if quizName:
+		if quizName and email and password:
 			user = klib.Kahoot(pin, name, quizName=quizName)
+		elif quizName:
+			print('Authentication required when searching for quizzes by name')
+			exit()
 		elif quizID:
 			user = klib.Kahoot(pin, name, quizID=quizID)
 		else:
-			if nameOrID():
+			if email and password and nameOrID():
 				quizName = input('quizName > ')
 				user = klib.Kahoot(pin, name, quizName=quizName)
 			else:
 				quizID = input('quizID > ')
 				user = klib.Kahoot(pin, name, quizID=quizID)
-		user.authenticate(email, password)
+		if email and password:
+			user.authenticate(email, password)
 		user.checkPin()
 		user.startGame()
 	except KeyboardInterrupt:
