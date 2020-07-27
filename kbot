@@ -19,11 +19,13 @@ if __name__ == "__main__":
 	parser.add_argument("--password", help="The corresponding password used to login to create.kahoot.it")
 	parser.add_argument("--name", help="The name to join the kahoot with")
 	parser.add_argument("--pin", help="The game pin")
+	parser.add_argument("--quizID", help="The game's quizID")
 	args = parser.parse_args()
 	email = args.email
 	password = args.password
 	name = args.name
 	pin = args.pin
+	quizID = args.quizID
 
 	try:
 		if not email:
@@ -34,12 +36,15 @@ if __name__ == "__main__":
 			name = input('name > ')
 		if not pin:
 			pin = input('pin > ')
-		if nameOrID():
-			quizName = input('quizName > ')
-			user = klib.Kahoot(pin, name, quizName=quizName)
-		else:
-			quizID = input('quizID > ')
+		if quizID:
 			user = klib.Kahoot(pin, name, quizID=quizID)
+		else:
+			if nameOrID():
+				quizName = input('quizName > ')
+				user = klib.Kahoot(pin, name, quizName=quizName)
+			else:
+				quizID = input('quizID > ')
+				user = klib.Kahoot(pin, name, quizID=quizID)
 		user.authenticate(email, password)
 		user.checkPin()
 		user.startGame()
