@@ -100,11 +100,17 @@ class Kahoot:
 						pass
 					elif kind == 'RESET_CONTROLLER':
 						print("RESET_CONTROLLER")
-						await client.close()
+						try:
+							await client.close()
+						except asyncio.CancelledError:
+							pass
 						exit()
 					elif kind == 'GAME_OVER':
 						print("Game over, if you didn't win the winner is hacking!")
-						await client.close()
+						try:
+							await client.close()
+						except asyncio.CancelledError:
+							pass
 						exit()
 					print(kind.replace('_', ' '))
 
@@ -120,7 +126,6 @@ class Kahoot:
 	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None):
 		print(url)  # DEBUG
 		resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
-		print(resp.text)  # DEBUG
 		if resp.status_code == 400:
 			raise KahootError("Invalid UUID.")
 		if resp.status_code != 200:
@@ -133,7 +138,7 @@ class Kahoot:
 						isCorrectQuiz = False
 						break
 				if isCorrectQuiz:
-					print("isCorrectQuiz")  # DEBUG
+					print("QUIZ FOUND")  # DEBUG
 					return resp.json()
 			print("Wrong num of expected answers")  # DEBUG
 		else:
@@ -156,14 +161,17 @@ class Kahoot:
 			if resp.status_code != 200:
 				raise KahootError("Something went wrong searching quizzes.")
 			quizzes = resp.json()['entities']
+			print(f'{len(quizzes)} matching quizzes found')
 			for quiz in quizzes:
+				print(f"Checking {quiz['card']['title']}...", end=" ")
 				if quiz['card']['title'] == self.quizName:
 					url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
 					return await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
 					                          actualAnswers=quiz['card']['number_of_questions'])
+				print("nope")
 
-				# Otherwise Panic
-				raise KahootError("No quiz found. (private?)")
+			# Otherwise Panic
+			raise KahootError("No quiz found. (private?)")
 
 	@staticmethod
 	def _remove_emojis(text):
