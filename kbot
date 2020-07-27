@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-e', "--email", help="The email used to login to create.kahoot.it")
 	parser.add_argument('-a', "--password", help="The corresponding password used to login to create.kahoot.it")
-	parser.add_argument('-n', "--name", help="The nickname to join the kahoot with")
+	parser.add_argument('-n', "--name", help="The nickname to join the Kahoot with")
 	parser.add_argument('-p', "--pin", help="The game pin")
 	parser.add_argument('-q', "--quizName", help="The quiz's name")
 	parser.add_argument('-I', "--quizID", help="The quiz's ID")
