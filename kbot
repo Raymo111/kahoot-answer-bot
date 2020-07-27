@@ -15,12 +15,12 @@ def nameOrID():
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--email", help="The email used to login to create.kahoot.it")
-	parser.add_argument("--password", help="The corresponding password used to login to create.kahoot.it")
-	parser.add_argument("--name", help="The name to join the kahoot with")
-	parser.add_argument("--pin", help="The game pin")
-	parser.add_argument("--quizName", help="The quiz's name")
-	parser.add_argument("--quizID", help="The quiz's ID")
+	parser.add_argument('-e', "--email", help="The email used to login to create.kahoot.it")
+	parser.add_argument('-a', "--password", help="The corresponding password used to login to create.kahoot.it")
+	parser.add_argument('-n', "--name", help="The nickname to join the kahoot with")
+	parser.add_argument('-p', "--pin", help="The game pin")
+	parser.add_argument('-q', "--quizName", help="The quiz's name")
+	parser.add_argument('-I', "--quizID", help="The quiz's ID")
 	args = parser.parse_args()
 	email = args.email
 	password = args.password
@@ -42,9 +42,13 @@ if __name__ == "__main__":
 		elif quizID:
 			user = klib.Kahoot(pin, name, quizID=quizID)
 		else:
-			if email and password and nameOrID():
-				quizName = input('quizName > ')
-				user = klib.Kahoot(pin, name, quizName=quizName)
+			if email and password:
+				if nameOrID():
+					quizName = input('quizName > ')
+					user = klib.Kahoot(pin, name, quizName=quizName)
+				else:
+					quizID = input('quizID > ')
+					user = klib.Kahoot(pin, name, quizID=quizID)
 			else:
 				quizID = input('quizID > ')
 				user = klib.Kahoot(pin, name, quizID=quizID)
