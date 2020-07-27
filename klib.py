@@ -114,12 +114,14 @@ class Kahoot:
 
 	@_check_auth
 	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None):
+		print(url)  # DEBUG
 		resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
+		print(resp.text)  # DEBUG
 		if resp.status_code == 400:
 			raise KahootError("Invalid UUID.")
 		if resp.status_code != 200:
 			raise KahootError("Something went wrong finding answers.")
-		if exceptedAnswers:
+		if exceptedAnswers and actualAnswers:
 			if actualAnswers == len(exceptedAnswers):
 				isCorrectQuiz = True
 				for q_index, question in enumerate(resp.json()['questions']):
@@ -128,23 +130,19 @@ class Kahoot:
 						break
 				if isCorrectQuiz:
 					print("isCorrectQuiz")  # DEBUG
-					print(resp)  # DEBUG
 					return resp.json()
 			print("Wrong num of expected answers")  # DEBUG
 		else:
 			print("No excepted answers")  # DEBUG
-			print(resp)  # DEBUG
 			return resp.json()
 
 	@_check_auth
 	async def searchQuiz(self, exceptedAnswers=None, maxCount=20):
-		print("Searching for quiz...")  # DEBUG
 		print(self.quizName)  # DEBUG
 		print(self.quizID)  # DEBUG
 		if self.quizID:
 			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
-			print(url)  # DEBUG
-			quiz = await self.getQuiz(self, url, exceptedAnswers)
+			quiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers)
 			print("quiz:")  # DEBUG
 			print(quiz)  # DEBUG
 			return quiz
@@ -159,7 +157,8 @@ class Kahoot:
 			for quiz in quizzes:
 				if quiz['card']['title'] == self.quizName:
 					url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
-					return await self.getQuiz(self, url, exceptedAnswers, quiz['card']['number_of_questions'])
+					return await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
+					                          actualAnswers=quiz['card']['number_of_questions'])
 
 				# Otherwise Panic
 				raise KahootError("No quiz found. (private?)")
