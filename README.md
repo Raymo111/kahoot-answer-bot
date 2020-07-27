@@ -1,10 +1,5 @@
-# The Amazing Automatic Kahoot Bot (kbot)
-
-### *now with functional code*
-People have made bots and things for kahoot in the past, but this is
-a new and improved edition that actually does
-everything for you. This one actually answers the questions, unlike
-some other tools and spammers. 
+# Kahoot Answer Bot
+A bot that takes the name or ID of a kahoot and gets a perfect score... with the username of your choosing.
 
 ## Getting Started
 
