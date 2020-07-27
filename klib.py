@@ -69,7 +69,6 @@ class Kahoot:
 			colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
 			offset = 0
 			async for rawMessage in client:
-				print(rawMessage)  # DEBUG
 				message = rawMessage['data']
 				if 'error' in message:
 					raise KahootError(message['description'])
@@ -99,7 +98,12 @@ class Kahoot:
 						# print('DID NOT ANSWER IN TIME, SKIPPING TO NEXT ANSWER')
 						# offset += 1
 						pass
-					elif kind == 'RESET_CONTROLLER' or kind == 'GAME_OVER':
+					elif kind == 'RESET_CONTROLLER':
+						print("RESET_CONTROLLER")
+						await client.close()
+						exit()
+					elif kind == 'GAME_OVER':
+						print("Game over, if you didn't win the winner is hacking!")
 						await client.close()
 						exit()
 					print(kind.replace('_', ' '))
@@ -143,8 +147,6 @@ class Kahoot:
 		if self.quizID:
 			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
 			quiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers)
-			print("quiz:")  # DEBUG
-			print(quiz)  # DEBUG
 			return quiz
 		elif self.quizName:
 			url = 'https://create.kahoot.it/rest/kahoots/'
