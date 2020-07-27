@@ -24,7 +24,7 @@ class Kahoot:
 		self.quizID = quizID
 		self.client = requests.session()
 		self.captchaToken = "KAHOOT_TOKEN_eyJ2ZXJzaW9uIjoiIn0="
-		# This will work until they add the version to code. https://repl.it/repls/WholeCrimsonFlashdrives
+		# This will work until Kahoot updates their code version (https://repl.it/repls/WholeCrimsonFlashdrives)
 		self.authToken = None
 		self.answers = None
 		self.loadCodes()
@@ -128,7 +128,7 @@ class Kahoot:
 		                           "id": 45})
 
 	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None):
-		print(url)  # DEBUG
+		print("If the questions are randomized, go to " + url + "to get the answers yourself.")  # TODO: output answers
 		if self.authToken:
 			resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
 		else:
