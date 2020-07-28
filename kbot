@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import klib
-import getpass
 import argparse
+
+import klib
 
 
 def nameOrID():
@@ -22,6 +22,7 @@ if __name__ == "__main__":
 	parser.add_argument('-q', "--quizName", help="The quiz's name")
 	parser.add_argument('-i', "--quizID", help="The quiz's ID")
 	parser.add_argument('-m', "--maxCount", help="How many quizzes to look for when searching by name")
+	parser.add_argument('-d', "--debug", help="Debug mode on")
 	args = parser.parse_args()
 	email = args.email
 	password = args.password
@@ -30,6 +31,7 @@ if __name__ == "__main__":
 	quizID = args.quizName
 	quizName = args.quizID
 	maxCount = args.maxCount
+	debug = args.debug
 
 	try:
 		if not nickname:
@@ -37,10 +39,10 @@ if __name__ == "__main__":
 		if not pin:
 			pin = input('pin > ')
 		if quizID:
-			user = klib.Kahoot(pin, nickname, quizID=quizID)
+			user = klib.Kahoot(pin, nickname, quizID=quizID, DEBUG=debug)
 		elif quizName:
 			if email and password:
-				user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount)
+				user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount, DEBUG=debug)
 			else:
 				print('Authentication required when searching for quizzes by name')
 				exit()
@@ -48,13 +50,13 @@ if __name__ == "__main__":
 			if email and password:
 				if nameOrID():
 					quizName = input('quizName > ')
-					user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount)
+					user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount, DEBUG=debug)
 				else:
 					quizID = input('quizID > ')
-					user = klib.Kahoot(pin, nickname, quizID=quizID)
+					user = klib.Kahoot(pin, nickname, quizID=quizID, DEBUG=debug)
 			else:
 				quizID = input('quizID > ')
-				user = klib.Kahoot(pin, nickname, quizID=quizID)
+				user = klib.Kahoot(pin, nickname, quizID=quizID, DEBUG=debug)
 		if email and password:
 			user.authenticate(email, password)
 		user.checkPin()
