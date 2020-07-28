@@ -27,6 +27,7 @@ class Kahoot:
 		# This will work until Kahoot updates their code version (https://repl.it/repls/WholeCrimsonFlashdrives)
 		self.authToken = None
 		self.answers = None
+		self.colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
 		self.loadCodes()
 
 	async def error(self, err):
@@ -71,8 +72,8 @@ class Kahoot:
 			await client.publish('/service/controller',
 			                     {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken,
 			                      "name": self.username, "type": "login"})
-			colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
 			offset = 0
+			tFADone = 0
 			async for rawMessage in client:
 				message = rawMessage['data']
 				if 'error' in message:
@@ -82,7 +83,10 @@ class Kahoot:
 					kind = ''
 					if message['id'] in self.lookup:
 						kind = self.lookup[message['id']]
-
+					if kind == 'TWO_FACTOR_AUTH_CORRECT':
+						tFADone = True
+					if kind == 'RESET_TWO_FACTOR_AUTH' and not tFADone:
+						await self.submit2FA()
 					if kind == 'START_QUIZ':
 						print(data)  # DEBUG
 						quizAnswers = data['quizQuestionAnswers']
@@ -94,7 +98,7 @@ class Kahoot:
 							pass
 						elif self.answers:
 							correct = self.answers[data['questionIndex'] + offset]['index']
-							print(f'SELECTED {colors[correct]}')
+							print(f'SELECTED {self.colors[correct]}')
 							await self.sendAnswer(correct)
 						else:
 							print('SELECTED FALLBACK')
@@ -117,7 +121,20 @@ class Kahoot:
 						except asyncio.CancelledError:
 							pass
 						exit()
-					print(kind.replace('_', ' '))
+					if not (tFADone and kind == 'RESET_TWO_FACTOR_AUTH'):
+						print(kind.replace('_', ' '))
+
+	def convert(self, cols):
+		for num, color in self.colors.items():
+			cols = cols.replace(color[0].lower(), str(num))
+		return cols
+
+	async def submit2FA(self):
+		seq = self.convert(input("2fa (e.g. rbyg, yrgb) > ").lower())
+		tfa = json.dumps({"sequence": seq})
+		await self.socket.publish("/service/controller",
+		                          {"content": tfa, "gameid": self.pin, "host": "kahoot.it", "type": "message",
+		                           "id": 50})
 
 	async def sendAnswer(self, choice):
 		choiceInfo = json.dumps(
@@ -127,8 +144,10 @@ class Kahoot:
 		                          {"content": choiceInfo, "gameid": self.pin, "host": "kahoot.it", "type": "message",
 		                           "id": 45})
 
-	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None):
+	def printAnswers(self, resp, url):
 		print("If the questions are randomized, go to " + url + "to get the answers yourself.")  # TODO: output answers
+
+	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None):
 		if self.authToken:
 			resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
 		else:
@@ -145,16 +164,16 @@ class Kahoot:
 						isCorrectQuiz = False
 						break
 				if isCorrectQuiz:
-					print("QUIZ FOUND")  # DEBUG
+					print("QUIZ FOUND")
+					self.printAnswers(resp.json(), url)
 					return resp.json()
-			print("Wrong num of expected answers")  # DEBUG
+			print("Wrong num of expected answers")
 		else:
-			print("No excepted answers")  # DEBUG
+			print("No excepted answers")
+			self.printAnswers(resp.json(), url)
 			return resp.json()
 
 	async def searchQuiz(self, exceptedAnswers=None, maxCount=20):
-		print(self.quizName)  # DEBUG
-		print(self.quizID)  # DEBUG
 		if self.quizID:
 			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
 			quiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers)
@@ -163,6 +182,7 @@ class Kahoot:
 			url = 'https://create.kahoot.it/rest/kahoots/'
 			params = {'query': self.quizName, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '',
 			          'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
+			print(self.authToken)  # DEBUG
 			if self.authToken:
 				resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
 			else:
@@ -173,12 +193,11 @@ class Kahoot:
 			print(f'{len(quizzes)} matching quizzes found')
 			for quiz in quizzes:
 				print(f"Checking {quiz['card']['title']}...", end=" ")
-				if quiz['card']['title'] == self.quizName:
-					url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
-					return await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
-					                          actualAnswers=quiz['card']['number_of_questions'])
-				print("nope")
-
+				url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
+				rightQuiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
+				                      actualAnswers=quiz['card']['number_of_questions'])
+				if rightQuiz:
+					return rightQuiz
 			# Otherwise Panic
 			await self.error("No quiz found. (private?)")
 
