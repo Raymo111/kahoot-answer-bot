@@ -17,41 +17,43 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-e', "--email", help="The email used to login to create.kahoot.it")
 	parser.add_argument('-a', "--password", help="The corresponding password used to login to create.kahoot.it")
-	parser.add_argument('-n', "--name", help="The nickname to join the Kahoot with")
+	parser.add_argument('-n', "--nick", help="The nickname to join the Kahoot with")
 	parser.add_argument('-p', "--pin", help="The game pin")
 	parser.add_argument('-q', "--quizName", help="The quiz's name")
-	parser.add_argument('-I', "--quizID", help="The quiz's ID")
+	parser.add_argument('-i', "--quizID", help="The quiz's ID")
+	parser.add_argument('-m', "--maxCount", help="How many quizzes to look for when searching by name")
 	args = parser.parse_args()
 	email = args.email
 	password = args.password
-	name = args.name
+	nickname = args.nick
 	pin = args.pin
 	quizID = args.quizName
 	quizName = args.quizID
+	maxCount = args.maxCount
 
 	try:
-		if not name:
-			name = input('name > ')
+		if not nickname:
+			nickname = input('name > ')
 		if not pin:
 			pin = input('pin > ')
 		if quizName and email and password:
-			user = klib.Kahoot(pin, name, quizName=quizName)
+			user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount)
 		elif quizName:
 			print('Authentication required when searching for quizzes by name')
 			exit()
 		elif quizID:
-			user = klib.Kahoot(pin, name, quizID=quizID)
+			user = klib.Kahoot(pin, nickname, quizID=quizID)
 		else:
 			if email and password:
 				if nameOrID():
 					quizName = input('quizName > ')
-					user = klib.Kahoot(pin, name, quizName=quizName)
+					user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount)
 				else:
 					quizID = input('quizID > ')
-					user = klib.Kahoot(pin, name, quizID=quizID)
+					user = klib.Kahoot(pin, nickname, quizID=quizID)
 			else:
 				quizID = input('quizID > ')
-				user = klib.Kahoot(pin, name, quizID=quizID)
+				user = klib.Kahoot(pin, nickname, quizID=quizID)
 		if email and password:
 			user.authenticate(email, password)
 		user.checkPin()

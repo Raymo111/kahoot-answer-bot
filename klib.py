@@ -17,9 +17,9 @@ from difflib import SequenceMatcher
 
 
 class Kahoot:
-	def __init__(self, pin, username, quizName=None, quizID=None):
+	def __init__(self, pin, nickname, quizName=None, quizID=None, maxCount=None):
 		self.pin = pin
-		self.username = username
+		self.nickname = nickname
 		self.quizName = quizName
 		self.quizID = quizID
 		self.client = requests.session()
@@ -28,6 +28,7 @@ class Kahoot:
 		self.authToken = None
 		self.answers = None
 		self.colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
+		self.maxCount = maxCount if maxCount else 50
 		self.loadCodes()
 
 	async def error(self, err):
@@ -71,7 +72,7 @@ class Kahoot:
 			await client.subscribe("/service/status")
 			await client.publish('/service/controller',
 			                     {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken,
-			                      "name": self.username, "type": "login"})
+			                      "name": self.nickname, "type": "login"})
 			offset = 0
 			tFADone = 0
 			async for rawMessage in client:
@@ -167,20 +168,23 @@ class Kahoot:
 					print("QUIZ FOUND")
 					self.printAnswers(resp.json(), url)
 					return resp.json()
-			print("Wrong num of expected answers")
+				else:
+					print("Wrong question types")
+			else:
+				print("Wrong num of expected answers")
 		else:
 			print("No excepted answers")
 			self.printAnswers(resp.json(), url)
 			return resp.json()
 
-	async def searchQuiz(self, exceptedAnswers=None, maxCount=20):
+	async def searchQuiz(self, exceptedAnswers=None):
 		if self.quizID:
 			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
 			quiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers)
 			return quiz
 		elif self.quizName:
 			url = 'https://create.kahoot.it/rest/kahoots/'
-			params = {'query': self.quizName, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '',
+			params = {'query': self.quizName, 'cursor': 0, 'limit': self.maxCount, 'topics': '', 'grades': '',
 			          'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
 			print(self.authToken)  # DEBUG
 			if self.authToken:
@@ -195,7 +199,7 @@ class Kahoot:
 				print(f"Checking {quiz['card']['title']}...", end=" ")
 				url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
 				rightQuiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
-				                      actualAnswers=quiz['card']['number_of_questions'])
+				                               actualAnswers=quiz['card']['number_of_questions'])
 				if rightQuiz:
 					return rightQuiz
 			# Otherwise Panic
