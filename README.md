@@ -1,9 +1,10 @@
 # Kahoot Answer Bot
-A bot that takes the name or ID of a kahoot and gets a perfect score... with the username of your choosing.
+A bot that takes the name or ID of a kahoot and gets a perfect score with the nickname of your choosing.
 
 *This project was started by [reteps](https://github.com/reteps/kbot) but is has been broken for quite a while, so I forked it and made it work.*
 
 ## Features
+The program intercepts and pretends to be a kahoot client. After receiving quiz name from host, looks up answers for quiz and uses them.
 - Search by quiz name (requires login) or ID
 - 2FA compatible
 
@@ -32,7 +33,7 @@ The email used to login to create.kahoot.it
 -a, --password
 The corresponding password used to login to create.kahoot.it
 
--n, --name
+-n, --nick
 The nickname to join the Kahoot with
 
 -p, --pin
@@ -49,7 +50,6 @@ Output go brrrrrrrrrrrrr
 ```
 
 ## Caveats
-The program intercepts and pretends to be a kahoot client. After receiving quiz name from host, looks up answers for quiz and uses them.
 Does not work when:
 - Kahoot is private
 - Answers are randomized
@@ -57,7 +57,10 @@ Does not work when:
 
 This is because this program uses the original question order and answer order, so if these are randomized the wrong answer will be clicked.
 
+## TODO
+- Print answers after each question in case of randomization
+
 ## Contributors
-* [Raymo111](https://github.com/Raymo111) - Fixing it
+* [Raymo111](https://github.com/Raymo111) - Fixing it, adding 2FA and search by ID
 * [reteps](https://github.com/reteps) - Main programming
 * [idiidk](https://github.com/idiidk) - For the challenge decoding
