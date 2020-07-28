@@ -1,7 +1,12 @@
 # Kahoot Answer Bot
 A bot that takes the name or ID of a kahoot and gets a perfect score... with the username of your choosing.
 
-*This project was started by [reteps](https://github.com/reteps/kbot) but the upstream version has been broken for quite a while so I forked it and made it work again*
+*This project was started by [reteps](https://github.com/reteps/kbot) but is has been broken for quite a while, so I forked it and made it work.*
+
+## Features
+- Search by quiz name (requires login) or ID
+- 2FA compatible
+- 
 
 ## Installation
 - [ ] Optional: Make a Kahoot Account if you don't have the Kahoot's ID and want to search for a Kahoot by name
@@ -37,8 +42,11 @@ The game pin
 -q, --quizName
 The quiz's name
 
--I, --quizID
-help="The quiz's ID
+-i, --quizID
+The quiz's ID
+
+-d, --debug
+Output go brrrrrrrrrrrrr
 ```
 
 ## Caveats
