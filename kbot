@@ -2,6 +2,7 @@
 import argparse
 
 import klib
+import re
 
 
 def nameOrID():
@@ -11,6 +12,14 @@ def nameOrID():
 			return True
 		if reply[:1] == 'i':
 			return False
+
+
+def checkID(id):
+	res = re.search(r"(([a-zA-Z0-9]){8}(-([a-zA-Z0-9]){4}){3}-([a-zA-Z0-9]){12})", id)
+	if not res:
+		print('Invalid UUID. It must take the form x8-x4-x4-x4-x12, where x8 means 8 alphanumeric characters')
+		exit()
+	return res.group(1)
 
 
 if __name__ == "__main__":
@@ -39,7 +48,7 @@ if __name__ == "__main__":
 		if not pin:
 			pin = input('pin > ')
 		if quizID:
-			user = klib.Kahoot(pin, nickname, quizID=quizID, DEBUG=debug)
+			user = klib.Kahoot(pin, nickname, quizID=checkID(quizID), DEBUG=debug)
 		elif quizName:
 			if email and password:
 				user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount, DEBUG=debug)
@@ -53,7 +62,8 @@ if __name__ == "__main__":
 					user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount, DEBUG=debug)
 				else:
 					quizID = input('quizID > ')
-					user = klib.Kahoot(pin, nickname, quizID=quizID, DEBUG=debug)
+					validID = re.search(r"^([a-zA-Z0-9]){8}(-([a-zA-Z0-9]){4}){3}-([a-zA-Z0-9]){12}$", quizID)
+					user = klib.Kahoot(pin, nickname, quizID=checkID(quizID), DEBUG=debug)
 			else:
 				quizID = input('quizID > ')
 				user = klib.Kahoot(pin, nickname, quizID=quizID, DEBUG=debug)
