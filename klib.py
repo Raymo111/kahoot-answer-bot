@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import re
+import sys
 import time
 
 try:
@@ -17,7 +18,7 @@ from difflib import SequenceMatcher
 
 
 class Kahoot:
-	def __init__(self, pin, nickname, quizName=None, quizID=None, maxCount=None):
+	def __init__(self, pin, nickname, quizName=None, quizID=None, maxCount=None, DEBUG=None):
 		self.pin = pin
 		self.nickname = nickname
 		self.quizName = quizName
@@ -30,18 +31,13 @@ class Kahoot:
 		self.colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
 		self.maxCount = maxCount if maxCount else 50
 		self.loadCodes()
-
-	async def error(self, err):
-		try:
-			await self.client.close()
-		except asyncio.CancelledError:
-			pass
-		raise KahootError(err)
+		if not DEBUG:
+			sys.tracebacklimit = 0
 
 	def _check_auth(f):
 		def wrapper(self, *args, **kwargs):
 			if not self.authToken:
-				self.error('You must be authenticated to use this method.')
+				raise KahootError('You must be authenticated to use this method.')
 			return f(self, *args, **kwargs)
 
 		return wrapper
@@ -52,12 +48,12 @@ class Kahoot:
 		response = self.client.post(url, json=data,
 		                            headers={'Content-Type': 'application/json', "x-kahoot-login-gate": "enabled"})
 		if response.status_code == 401:
-			self.error("Invalid Email or Password.")
+			raise KahootError("Invalid Email or Password.")
 		elif response.status_code == 200:
 			print('AUTHENTICATED')
 			self.authToken = response.json()["access_token"]
 		else:
-			self.error("Login error %d", response.status_code)
+			raise KahootError("Login error %d", response.status_code)
 
 	def startGame(self):
 		loop = asyncio.get_event_loop()
@@ -80,7 +76,7 @@ class Kahoot:
 			async for rawMessage in client:
 				message = rawMessage['data']
 				if 'error' in message:
-					await self.error(message['description'])
+					raise KahootError(message['description'])
 				if 'id' in message:
 					data = json.loads(message['content'])
 					kind = ''
@@ -112,17 +108,9 @@ class Kahoot:
 						pass
 					elif kind == 'RESET_CONTROLLER':
 						print("RESET_CONTROLLER")
-						try:
-							await client.close()
-						except asyncio.CancelledError:
-							pass
 						exit()
 					elif kind == 'GAME_OVER':
 						print("Game over, if you didn't win the winner is hacking!")
-						try:
-							await client.close()
-						except asyncio.CancelledError:
-							pass
 						exit()
 					if not (tFADone and kind == 'RESET_TWO_FACTOR_AUTH'):
 						print(kind.replace('_', ' '))
@@ -156,9 +144,9 @@ class Kahoot:
 		else:
 			resp = self.client.get(url)
 		if resp.status_code == 400:
-			await self.error("Invalid UUID.")
+			raise KahootError("Invalid UUID.")
 		if resp.status_code != 200:
-			await self.error("Something went wrong finding answers.")
+			raise KahootError("Something went wrong finding answers.")
 		if exceptedAnswers and actualAnswers:
 			if actualAnswers == len(exceptedAnswers):
 				isCorrectQuiz = True
@@ -194,7 +182,7 @@ class Kahoot:
 			else:
 				resp = self.client.get(url, params=params)
 			if resp.status_code != 200:
-				await self.error("Something went wrong searching quizzes.")
+				raise KahootError("Something went wrong searching quizzes.")
 			quizzes = resp.json()['entities']
 			print(f'{len(quizzes)} matching quizzes found')
 			for quiz in quizzes:
@@ -205,7 +193,7 @@ class Kahoot:
 				if rightQuiz:
 					return rightQuiz
 			# Otherwise Panic
-			await self.error("No quiz found. (private?)")
+			raise KahootError("No quiz found. (private?)")
 
 	@staticmethod
 	def _remove_emojis(text):
@@ -244,7 +232,7 @@ class Kahoot:
 		url = f"https://play.kahoot.it/reserve/session/{self.pin}/?{currentTime}"
 		resp = self.client.get(url)
 		if resp.status_code != 200:
-			self.error(f"Pin {self.pin} does not exist.")
+			raise KahootError(f"Pin {self.pin} does not exist.")
 		self.sessionToken = resp.headers['x-kahoot-session-token']
 		self.sessionID = self.solveChallenge(resp.json()["challenge"])
 
