@@ -75,6 +75,8 @@ class Kahoot:
 			                      "name": self.nickname, "type": "login"})
 			offset = 0
 			tFADone = 0
+			if self.quizID:
+				self.answers = await self.findAnswers()
 			async for rawMessage in client:
 				message = rawMessage['data']
 				if 'error' in message:
@@ -91,8 +93,8 @@ class Kahoot:
 					if kind == 'START_QUIZ':
 						print(data)  # DEBUG
 						quizAnswers = data['quizQuestionAnswers']
-						self.answers = await self.findAnswers(exceptedAnswers=quizAnswers)
-						print(f'ANSWERS RECEIVED')
+						if not self.answers:
+							self.answers = await self.findAnswers(exceptedAnswers=quizAnswers)
 					elif kind == 'START_QUESTION':
 						print('------', data['questionIndex'] + 1, '------')
 						if data['gameBlockType'] != 'quiz':
@@ -233,6 +235,7 @@ class Kahoot:
 				if choice['correct'] and not foundAnswer:
 					foundAnswer = True
 					answers.append({'question': question['question'], 'index': i, 'answer': choice['answer']})
+		print(f'ANSWERS RECEIVED')
 		return answers
 
 	def checkPin(self):
