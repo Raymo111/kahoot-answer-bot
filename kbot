@@ -36,13 +36,14 @@ if __name__ == "__main__":
 			nickname = input('name > ')
 		if not pin:
 			pin = input('pin > ')
-		if quizName and email and password:
-			user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount)
-		elif quizName:
-			print('Authentication required when searching for quizzes by name')
-			exit()
-		elif quizID:
+		if quizID:
 			user = klib.Kahoot(pin, nickname, quizID=quizID)
+		elif quizName:
+			if email and password:
+				user = klib.Kahoot(pin, nickname, quizName=quizName, maxCount=maxCount)
+			else:
+				print('Authentication required when searching for quizzes by name')
+				exit()
 		else:
 			if email and password:
 				if nameOrID():
