@@ -6,7 +6,6 @@ A bot that takes the name or ID of a kahoot and gets a perfect score... with the
 ## Features
 - Search by quiz name (requires login) or ID
 - 2FA compatible
-- 
 
 ## Installation
 - [ ] Optional: Make a Kahoot Account if you don't have the Kahoot's ID and want to search for a Kahoot by name
