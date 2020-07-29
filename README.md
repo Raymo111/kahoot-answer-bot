@@ -39,6 +39,9 @@ The nickname to join the Kahoot with
 -p, --pin
 The game pin
 
+-s --search
+Search for a quiz without joining a Kahoot. Cancels nick and pin options.
+
 -q, --quizName
 The quiz's name
 
