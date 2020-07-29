@@ -2,7 +2,6 @@ import base64
 import json
 import os
 import re
-import sys
 import time
 
 try:
@@ -18,7 +17,7 @@ from difflib import SequenceMatcher
 
 
 class Kahoot:
-	def __init__(self, pin, nickname, quizName=None, quizID=None, maxCount=None, DEBUG=None):
+	def __init__(self, pin=None, nickname=None, quizName=None, quizID=None, maxCount=None, DEBUG=None):
 		self.pin = pin
 		self.nickname = nickname
 		self.quizName = quizName
@@ -30,15 +29,23 @@ class Kahoot:
 		self.answers = None
 		self.colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
 		self.maxCount = maxCount if maxCount else 50
+		self.lookup = None
 		self.loadCodes()
-		self.DEBUG = DEBUG;
-		if not DEBUG:
-			sys.tracebacklimit = 0
+		self.sessionID = None
+		self.sessionToken = None
+		self.DEBUG = DEBUG
+		self.loop = asyncio.get_event_loop()
+
+	def error(self, err):
+		raise KahootError(err)
+
+	def gracefulExit(self):
+		exit()
 
 	def _check_auth(f):
 		def wrapper(self, *args, **kwargs):
 			if not self.authToken:
-				raise KahootError('You must be authenticated to use this method.')
+				self.error('You must be authenticated to use this method.')
 			return f(self, *args, **kwargs)
 
 		return wrapper
@@ -49,16 +56,21 @@ class Kahoot:
 		response = self.client.post(url, json=data,
 		                            headers={'Content-Type': 'application/json', "x-kahoot-login-gate": "enabled"})
 		if response.status_code == 401:
-			raise KahootError("Invalid Email or Password.")
+			self.error("Invalid Email or Password.")
 		elif response.status_code == 200:
 			print('AUTHENTICATED')
 			self.authToken = response.json()["access_token"]
 		else:
-			raise KahootError("Login error %d", response.status_code)
+			self.error(f"Login error {response.status_code}")
 
 	def startGame(self):
-		loop = asyncio.get_event_loop()
-		loop.run_until_complete(self._play())
+		self.loop.run_until_complete(self._play())
+
+	def search(self):
+		self.loop.run_until_complete(self._search())
+
+	async def _search(self):
+		self.answers = await self.findAnswers(searchOnly=1)
 
 	async def _play(self):
 		url = f'wss://play.kahoot.it/cometd/{self.pin}/{self.sessionID}'
@@ -74,10 +86,12 @@ class Kahoot:
 			tFADone = 0
 			if self.quizID:
 				self.answers = await self.findAnswers()
+				if self.answers:
+					print(f'ANSWERS RECEIVED')
 			async for rawMessage in client:
 				message = rawMessage['data']
 				if 'error' in message:
-					raise KahootError(message['description'])
+					self.error(message['description'])
 				if 'id' in message:
 					data = json.loads(message['content'])
 					kind = ''
@@ -93,6 +107,8 @@ class Kahoot:
 						quizAnswers = data['quizQuestionAnswers']
 						if not self.answers:
 							self.answers = await self.findAnswers(exceptedAnswers=quizAnswers)
+							if self.answers:
+								print(f'ANSWERS RECEIVED')
 					elif kind == 'START_QUESTION':
 						print('------', data['questionIndex'] + 1, '------')
 						if data['gameBlockType'] != 'quiz':
@@ -110,10 +126,10 @@ class Kahoot:
 						pass
 					elif kind == 'RESET_CONTROLLER':
 						print("RESET_CONTROLLER")
-						exit()
+						self.gracefulExit()
 					elif kind == 'GAME_OVER':
 						print("Game over, if you didn't win the winner is hacking!")
-						exit()
+						self.gracefulExit()
 					if not (tFADone and kind == 'RESET_TWO_FACTOR_AUTH'):
 						print(kind.replace('_', ' '))
 
@@ -137,18 +153,17 @@ class Kahoot:
 		                          {"content": choiceInfo, "gameid": self.pin, "host": "kahoot.it", "type": "message",
 		                           "id": 45})
 
-	def printAnswers(self, resp, url):
-		print("If the questions are randomized, go to " + url + "to get the answers yourself.")  # TODO: output answers
-
-	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None):
+	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None, searchOnly=None):
+		if self.DEBUG:
+			print(url)
 		if self.authToken:
 			resp = self.client.get(url, headers={'Authorization': f'Bearer {self.authToken}'})
 		else:
 			resp = self.client.get(url)
 		if resp.status_code == 400:
-			raise KahootError("Invalid UUID.")
+			self.error("Invalid UUID.")
 		if resp.status_code != 200:
-			raise KahootError("Something went wrong finding answers.")
+			self.error("Something went wrong finding answers.")
 		if exceptedAnswers and actualAnswers:
 			if actualAnswers == len(exceptedAnswers):
 				isCorrectQuiz = True
@@ -158,22 +173,19 @@ class Kahoot:
 						break
 				if isCorrectQuiz:
 					print("QUIZ FOUND")
-					self.printAnswers(resp.json(), url)
 					return resp.json()
 				else:
 					print("Wrong question types")
 			else:
 				print("Wrong num of expected answers")
 		else:
-			print("No excepted answers")
-			self.printAnswers(resp.json(), url)
+			print("Here you go:" if searchOnly else "No excepted answers")
 			return resp.json()
 
-	async def searchQuiz(self, exceptedAnswers=None):
+	async def findAnswers(self, exceptedAnswers=None, searchOnly=None):
 		if self.quizID:
 			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
-			quiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers)
-			return quiz
+			return self.parseAnswers(await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers), self.DEBUG)
 		elif self.quizName:
 			url = 'https://create.kahoot.it/rest/kahoots/'
 			params = {'query': self.quizName, 'cursor': 0, 'limit': self.maxCount, 'topics': '', 'grades': '',
@@ -185,18 +197,50 @@ class Kahoot:
 			else:
 				resp = self.client.get(url, params=params)
 			if resp.status_code != 200:
-				raise KahootError("Something went wrong searching quizzes.")
+				self.error("Something went wrong searching quizzes.")
 			quizzes = resp.json()['entities']
 			print(f'{len(quizzes)} matching quizzes found')
-			for quiz in quizzes:
-				print(f"Checking {quiz['card']['title']}...", end=" ")
-				url = f'https://create.kahoot.it/rest/kahoots/{quiz["card"]["uuid"]}'
-				rightQuiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
-				                               actualAnswers=quiz['card']['number_of_questions'])
-				if rightQuiz:
-					return rightQuiz
-			# Otherwise Panic
-			raise KahootError("No quiz found. (private?)")
+			for q in quizzes:
+				if searchOnly:
+					if not re.match(r'y(es)?', input(f"Check '{q['card']['title']}'? [y/N] ").lower()):
+						continue
+				else:
+					print(f"Checking {q['card']['title']}...", end=" ")
+				url = f'https://create.kahoot.it/rest/kahoots/{q["card"]["uuid"]}'
+				quiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
+				                          actualAnswers=q['card']['number_of_questions'], searchOnly=searchOnly)
+				if searchOnly:
+					self.parseAnswers(quiz, self.DEBUG)
+				elif quiz:
+					return self.parseAnswers(quiz, self.DEBUG)
+			if not quiz:
+				self.error("No quiz found. (private?)")
+
+	@staticmethod
+	def parseAnswers(quiz, debug=None):
+		answers = []
+		if debug:
+			print(quiz)
+		for question in quiz['questions']:
+			foundAnswer = False
+			if question['type'] != 'quiz':
+				answers.append({'NOT A': 'QUESTION'})
+				continue
+			for i, choice in enumerate(question['choices']):
+				if choice['correct'] and not foundAnswer:
+					foundAnswer = True
+					answers.append({'question': question['question'], 'index': i, 'answer': choice['answer']})
+		Kahoot.printAnswers(quiz, answers)
+		return answers
+
+	@staticmethod
+	def printAnswers(quiz, answers):
+		# print("If the questions are randomized, go to " + url + "to get the answers yourself.")
+		print(f"Title: {quiz['title']}")
+		print(f"Creator: {quiz['creator_username']}")
+		print(f"Desc: {quiz['description']}")
+		for q in answers:
+			print(f"{q['question']}\n\t{q['answer']}")
 
 	@staticmethod
 	def _remove_emojis(text):
@@ -213,30 +257,13 @@ class Kahoot:
 	def _similar(a, b):
 		return SequenceMatcher(None, a, b).ratio()
 
-	async def findAnswers(self, exceptedAnswers=None):
-		quizProperties = await self.searchQuiz(exceptedAnswers)
-		answers = []
-		if self.DEBUG:
-			print(quizProperties)
-		for question in quizProperties['questions']:
-			foundAnswer = False
-			if question['type'] != 'quiz':
-				answers.append({'NOT A': 'QUESTION'})
-				continue
-			for i, choice in enumerate(question['choices']):
-				if choice['correct'] and not foundAnswer:
-					foundAnswer = True
-					answers.append({'question': question['question'], 'index': i, 'answer': choice['answer']})
-		print(f'ANSWERS RECEIVED')
-		return answers
-
 	def checkPin(self):
 		assert type(self.pin) == str
 		currentTime = int(time.time())
 		url = f"https://play.kahoot.it/reserve/session/{self.pin}/?{currentTime}"
 		resp = self.client.get(url)
 		if resp.status_code != 200:
-			raise KahootError(f"Pin {self.pin} does not exist.")
+			self.error(f"Pin {self.pin} does not exist.")
 		self.sessionToken = resp.headers['x-kahoot-session-token']
 		self.sessionID = self.solveChallenge(resp.json()["challenge"])
 
