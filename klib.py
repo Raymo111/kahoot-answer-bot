@@ -31,6 +31,7 @@ class Kahoot:
 		self.colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
 		self.maxCount = maxCount if maxCount else 50
 		self.loadCodes()
+		self.DEBUG = DEBUG;
 		if not DEBUG:
 			sys.tracebacklimit = 0
 
@@ -87,7 +88,8 @@ class Kahoot:
 					if kind == 'RESET_TWO_FACTOR_AUTH' and not tFADone:
 						await self.submit2FA()
 					if kind == 'START_QUIZ':
-						print(data)  # DEBUG
+						if self.DEBUG:
+							print(data)
 						quizAnswers = data['quizQuestionAnswers']
 						if not self.answers:
 							self.answers = await self.findAnswers(exceptedAnswers=quizAnswers)
@@ -176,7 +178,8 @@ class Kahoot:
 			url = 'https://create.kahoot.it/rest/kahoots/'
 			params = {'query': self.quizName, 'cursor': 0, 'limit': self.maxCount, 'topics': '', 'grades': '',
 			          'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
-			print(self.authToken)  # DEBUG
+			if self.DE
+				print(self.authToken)
 			if self.authToken:
 				resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
 			else:
@@ -213,7 +216,8 @@ class Kahoot:
 	async def findAnswers(self, exceptedAnswers=None):
 		quizProperties = await self.searchQuiz(exceptedAnswers)
 		answers = []
-		print(quizProperties)  # DEBUG
+		if self.DEBUG:
+			print(quizProperties)
 		for question in quizProperties['questions']:
 			foundAnswer = False
 			if question['type'] != 'quiz':
