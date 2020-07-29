@@ -178,7 +178,7 @@ class Kahoot:
 			url = 'https://create.kahoot.it/rest/kahoots/'
 			params = {'query': self.quizName, 'cursor': 0, 'limit': self.maxCount, 'topics': '', 'grades': '',
 			          'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
-			if self.DE
+			if self.DEBUG:
 				print(self.authToken)
 			if self.authToken:
 				resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
