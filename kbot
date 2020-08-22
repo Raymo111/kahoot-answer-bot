@@ -42,8 +42,8 @@ if __name__ == "__main__":
 	nickname = args.nick
 	pin = args.pin
 	searchOnly = args.search
-	quizID = args.quizName
-	quizName = args.quizID
+	quizID = args.quizID
+	quizName = args.quizName
 	maxCount = args.maxCount
 	debug = args.debug
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 						user = klib.Kahoot(pin=pin, nickname=nickname, quizID=checkID(input('quizID > ')), DEBUG=debug)
 				else:
 					user = klib.Kahoot(pin=pin, nickname=nickname, quizID=checkID(input('quizID > ')), DEBUG=debug)
-		if email and password:
+		if email and password and user:
 			user.authenticate(email, password)
 		if searchOnly:
 			user.search()
