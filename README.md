@@ -23,6 +23,7 @@ The program intercepts and pretends to be a kahoot client. After receiving quiz 
   - `python3 -m pip install -r requirements.txt`
 
 ## Usage
+Open a terminal (Command Prompt on Windows) and navigate to the directory (folder) containing kbot. Then use the following command, replacing `[options]` with any options you want to use (listed below).
 ```
 python3 kbot [options]
 ```
