@@ -6,21 +6,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--email",help="The email used to login to create.kahoot.it")
     parser.add_argument("--password",help="The corrosponding password used to login to create.kahoot.it")
+    parser.add_argument("--pin",help="The game pin")
+    parser.add_argument("--name",help="The name you want")
+    parser.add_argument('--random_question', action="store_true")
+    parser.add_argument('--random_answer', action="store_true")
     args = parser.parse_args()
-    email = args.email
-    password = args.password
-
+    for key, val in vars(args).items():
+        if val is None:
+            val = input(f'{key} > ')
+            setattr(args, key, val)
     try:
-        if not email:
-            email = input('email > ')
-        elif not password:
-            password = getpass.getpass('password > ')
-
-        pin = input("pin > ")
-        name = input('name > ')
-        user = klib.Kahoot(pin, name)
-        user.authenticate(email, password)
-        user.checkPin()
+        user = klib.Kahoot(args.pin, args.name)
+        user.random_question = args.random_question
+        user.random_answer = args.random_answer
+        user.authenticate(args.email, args.password)
         user.startGame()
     except KeyboardInterrupt:
         print('EXITING...')

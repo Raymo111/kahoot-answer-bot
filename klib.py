@@ -7,7 +7,6 @@ import os
 
 try:
     import aiocometd
-    from py_mini_racer import py_mini_racer
     import requests
 except ModuleNotFoundError:
     if "y" in input("Install dependencies? [y/N] > ").lower():
@@ -16,7 +15,7 @@ except ModuleNotFoundError:
 import asyncio
 import urllib.parse
 from difflib import SequenceMatcher
-
+from pprint import pprint
 
 class Kahoot:
     def __init__(self, pin, username):
@@ -27,6 +26,10 @@ class Kahoot:
         # This will work until they add the version to code. https://repl.it/repls/WholeCrimsonFlashdrives
         self.authToken = None
         self.answers = None
+        self._session_id = None
+        self.random_question = False
+        self.random_answer = False
+        self.device_info = {"device": {"userAgent": "kbot", "screen": {"width": 1920, "height": 1080}}}
         self.loadCodes()
 
     def _check_auth(f):
@@ -51,64 +54,98 @@ class Kahoot:
     def startGame(self):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._play())
+    async def join_game(self):
 
+        await client.publish('/service/controller')
+    async def _send(self, socket, content, c_type, params={}):
+        payload = {
+            'content': content,
+            'gameid': self.pin,
+            'host': 'kahoot.it',
+            'type': c_type,
+            **params
+        }
+        try:
+            await socket.publish('/service/controller', payload)
+        except asyncio.TimeoutError:
+            pass
+    @property
+    def session_id(self):
+        if not self._session_id:
+            self._session_id = self.get_session_id()
+        return self._session_id
     async def _play(self):
-        url = f'wss://play.kahoot.it/cometd/{self.pin}/{self.sessionID}'
-        async with aiocometd.Client(url, ssl=False) as client:
-            self.socket = client
-            await client.subscribe("/service/controller")
-            await client.subscribe("/service/player")
-            await client.subscribe("/service/status")
-            await client.publish('/service/controller',
-                                 {"host": "kahoot.it", "gameid": self.pin, "captchaToken": self.captchaToken, "name": self.username, "type": "login"})
-            colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
-            offset = 0
-            async for rawMessage in client:
+        url = f'wss://play.kahoot.it/cometd/{self.pin}/{self.session_id}'
+        # pprint(url)
+        colors = {0: "RED", 1: "BLUE", 2: "YELLOW", 3: "GREEN"}
+        reverse_colors = {'r': 0, 'b': 1, 'y': 2, 'g': 3}
+        correct_question_num = None
+        async with aiocometd.Client(url, ssl=False) as socket:
+            await socket.subscribe('/service/controller')
+            await socket.subscribe("/service/status")
+            await socket.subscribe("/service/player")
+            await self._send(socket, '', 'login', {'name': self.username})
+            async for rawMessage in socket:
                 message = rawMessage['data']
-                if 'error' in message:
-                    raise KahootError(message['description'])
-                if 'id' in message:
-                    data = json.loads(message['content'])
-                    kind = ''
-                    if message['id'] in self.lookup:
-                        kind = self.lookup[message['id']]
+                if message.get('error'):
+                    raise KahootError(f"{message['error']}:{message['description']}")
+                if message.get('id') is None:
+                    continue
+                kind = self.lookup[message['id']]
+                message['id'] = kind
+                data = json.loads(message['content'])
+                if kind == 'START_QUIZ':
+                    quizName = data.get('quizName', data.get('quizTitle'))# data['quizName']
+                    quizAnswers = data['quizQuestionAnswers']
+                    self.answers = await self.findAnswers(quizName, quizAnswers)
+                    print(f'ANSWERS RECEIVED')
+                elif kind == 'GET_READY' and self.random_question:
+                    assert self.answers is not None
+                    valid_answers = list(filter(lambda x: x['questionIndex'] >= 0, self.answers))
+                    for question in self.answers:
+                        if question['questionIndex'] >= 0:
+                            correct_question_num = question['questionIndex']
+                            print(f"{question['questionIndex']} - {question['question']}")
+                        if len(valid_answers) > 1:
+                            correct_question_num = int(input('Correct # > '))
+                    self.answers[correct_question_num]['questionIndex'] = -1
 
-                    if kind == 'START_QUIZ':
-                        quizName = data['quizName']
-                        quizAnswers = data['quizQuestionAnswers']
-                        self.answers = await self.findAnswers(name=quizName, exceptedAnswers=quizAnswers)
-                        print(f'ANSWERS RECEIVED')
-                    elif kind == 'START_QUESTION':
-                        print('------', data['questionIndex']+1, '------')
-                        if data['gameBlockType'] != 'quiz':
-                            pass
-                        elif self.answers:
-                            correct = self.answers[data['questionIndex'] + offset]['index']
-                            print(f'SELECTED {colors[correct]}')
-                            await self.sendAnswer(correct)
+                elif kind == 'START_QUESTION':
+                    assert self.answers is not None
+                    if not self.random_question:
+                        correct_question_num = data['questionIndex']
+                    if data['gameBlockType'] == 'quiz' or self.random_question:
+                        correct = self.answers[correct_question_num]
+                        if self.random_answer:
+                            while True:
+                                correct_color = input(f'Which color is {correct["answer"]}?\n[R/Y/G/B] > ').lower()[0]
+                                if reverse_colors.get(correct_color) is not None:
+                                    correct_index = reverse_colors[correct_color]
+                                    break
                         else:
-                            print('SELECTED FALLBACK')
-                            await self.sendAnswer(1)
-                    elif kind == 'TIME_UP':
-                        # print('DID NOT ANSWER IN TIME, SKIPPING TO NEXT ANSWER')
-                        # offset += 1
-                        pass
-                    elif kind == 'RESET_CONTROLLER' or kind == 'GAME_OVER':
-                        await client.close()
-                        exit()
-                    print(kind.replace('_', ' '))
+                            correct_index = correct.get('answerIndex', 0)
+                        print(f'SELECTED {colors[correct_index]}')
+                        choiceInfo = json.dumps({"type": "quiz", "choice": correct_index, "meta": {"lag": 5000}})
+                        await self._send(socket, choiceInfo, 'message', params={'id':45})
+                    else:
+                        print('Not a quiz question or no answers.')
+                elif kind == 'TIME_UP':
+                    pass
+                    # print(f'DID NOT ANSWER IN TIME ON QUESTION {data["questionNumber"]}')
+                elif kind == 'RESET_CONTROLLER' or kind == 'GAME_OVER':
+                    break
+            try:
+                await socket.close()
+                exit()
+            except asyncio.CancelledError:
+                exit()
 
-    async def sendAnswer(self, choice):
-        choiceInfo = json.dumps({"choice": choice, "meta": {"lag": 0, "device": {"userAgent": "kbot", "screen": {"width": 1920, "height": 1080}}}})
-        await self.socket.publish("/service/controller",
-                                  {"content": choiceInfo,
-                                   "gameid": self.pin,
-                                   "host": "kahoot.it",
-                                   "type": "message",
-                                   "id": 45})
+    async def sendAnswer(self, socket, choice):
+        choiceInfo = json.dumps({"type": "quiz", "choice": choice, "meta": {"lag": 0}})
+        await self._send(socket, choiceInfo, 'message', params={'id':45})
 
     @_check_auth
-    async def searchQuiz(self, name, exceptedAnswers=None, maxCount=20):
+    async def searchQuiz(self, name, exceptedAnswers, maxCount=20):
         url = 'https://create.kahoot.it/rest/kahoots/'
         params = {'query': name, 'cursor': 0, 'limit': maxCount, 'topics': '', 'grades': '', 'orderBy': 'relevance', 'searchCluster': 1, 'includeExtendedCounters': False}
         resp = self.client.get(url, params=params, headers={'Authorization': f'Bearer {self.authToken}'})
@@ -124,41 +161,25 @@ class Kahoot:
                     raise KahootError("Invalid UUID.")
                 if resp.status_code != 200:
                     raise KahootError("Something went wrong finding answers.")
-                if exceptedAnswers:
-                    if quiz['card']['number_of_questions'] == len(exceptedAnswers):
-                        isCorrectQuiz = True
-                        for q_index, question in enumerate(resp.json()['questions']):
-                            if len(question['choices']) != exceptedAnswers[q_index]:
-                                isCorrectQuiz = False
-                                break
-                        if isCorrectQuiz:
-                            return resp.json()
+                if quiz['card']['number_of_questions'] == len(exceptedAnswers):
+                    isCorrectQuiz = True
+                    for q_index, question in enumerate(resp.json()['questions']):
+                        if len(question['choices']) != exceptedAnswers[q_index]:
+                            isCorrectQuiz = False
+                            break
+                    if isCorrectQuiz:
+                        return resp.json()
                 else:
                     return resp.json()
 
         # Otherwise Panic
         raise KahootError("No quiz found. (private?)")
 
-    @staticmethod
-    def _remove_emojis(text):
-        # https://stackoverflow.com/questions/33404752/removing-emojis-from-a-string-in-python/33417311
-        emoji_pattern = re.compile("["
-                                   u"\U0001F600-\U0001F64F"  # emoticons
-                                   u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-                                   u"\U0001F680-\U0001F6FF"  # transport & map symbols
-                                   u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-                                   "]+", flags=re.UNICODE)
-        return emoji_pattern.sub(r'', text)
-
-    @staticmethod
-    def _similar(a, b):
-        return SequenceMatcher(None, a, b).ratio()
-
     @_check_auth
-    async def findAnswers(self, name, exceptedAnswers=None):
+    async def findAnswers(self, name, exceptedAnswers):
         quizProperties = await self.searchQuiz(name, exceptedAnswers)
         answers = []
-        for question in quizProperties['questions']:
+        for j, question in enumerate(quizProperties['questions']):
             foundAnswer = False
             if question['type'] != 'quiz':
                 answers.append({'NOT A': 'QUESTION'})
@@ -166,32 +187,31 @@ class Kahoot:
             for i, choice in enumerate(question['choices']):
                 if choice['correct'] and not foundAnswer:
                     foundAnswer = True
-                    answers.append({'question': question['question'], 'index': i, 'answer': choice['answer']})
+                    answers.append({'question': question['question'], 'questionIndex': j, 'answerIndex': i, 'answer': choice['answer']})
         return answers
 
-    def checkPin(self):
-        assert type(self.pin) == str
+    def get_session_id(self):
         currentTime = int(time.time())
         url = f"https://play.kahoot.it/reserve/session/{self.pin}/?{currentTime}"
         resp = self.client.get(url)
         if resp.status_code != 200:
             raise KahootError(f"Pin {self.pin} does not exist.")
-        self.sessionToken = resp.headers['x-kahoot-session-token']
-        self.sessionID = self.solveChallenge(resp.json()["challenge"])
+        token = resp.headers['x-kahoot-session-token']
+        challenge_bits = self._solveChallenge(resp.json()['challenge'])
+        return self._shiftBits(challenge_bits, token)
 
-    def solveChallenge(self, text):
-        # Rebuilt Javascript so engine can solve it
-        text = text.replace('\t', '', -1).encode('ascii', 'ignore').decode('utf-8')
-        text = re.split("{|}|;", text)
-        replaceFunction = "return message.replace(/./g, function(char, position) {"
-        rebuilt = [text[1] + "{", text[2] + ";", replaceFunction, text[7] + ";})};", text[0]]
+    def _solveChallenge(self, text):
+        solution_regex = re.compile(r'\'(.*)\'.*offset\s=(.*?);.*%\s(\d+)\)\s\+\s(\d+)\)')
+        parts = re.search(solution_regex, text)
+        s, offset, mod, add = parts.groups()
+        offset = eval(offset.replace('\t','').encode('ascii', 'ignore'))
+        built = ''
+        for i, char in enumerate(s):
+            built += chr((ord(char) * i + offset) % int(mod) + int(add))
+        return built
 
-        jsEngine = py_mini_racer.MiniRacer()
-        solution = jsEngine.eval("".join(rebuilt))
-        return self._shiftBits(solution)
-
-    def _shiftBits(self, solution):
-        decodedToken = base64.b64decode(self.sessionToken).decode('utf-8', 'strict')
+    def _shiftBits(self, solution, session_token):
+        decodedToken = base64.b64decode(session_token).decode('utf-8', 'strict')
         solChars = [ord(s) for s in solution]
         sessChars = [ord(s) for s in decodedToken]
         return "".join([chr(sessChars[i] ^ solChars[i % len(solChars)]) for i in range(len(sessChars))])
