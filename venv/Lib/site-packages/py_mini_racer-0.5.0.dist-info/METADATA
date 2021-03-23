@@ -1,0 +1,380 @@
+Metadata-Version: 2.1
+Name: py-mini-racer
+Version: 0.5.0
+Summary: Minimal, modern embedded V8 for Python.
+Home-page: https://github.com/sqreen/PyMiniRacer
+Author: Sqreen
+Author-email: hey@sqreen.io
+License: ISCL
+Keywords: py_mini_racer
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: ISC License (ISCL)
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+
+===============================
+Python Mini Racer
+===============================
+
+.. image:: https://img.shields.io/pypi/v/py_mini_racer.svg
+        :target: https://pypi.python.org/pypi/py_mini_racer
+
+.. image:: https://dev.azure.com/sqreenci/PyMiniRacer/_apis/build/status/sqreen.PyMiniRacer?branchName=master
+        :target: https://dev.azure.com/sqreenci/PyMiniRacer/_build/latest?definitionId=10&branchName=master
+
+Minimal, modern embedded V8 for Python.
+
+* Free software: ISC license
+
+.. image:: https://github.com/sqreen/PyMiniRacer/raw/master/data/py_mini_racer.png
+
+Features
+--------
+
+* Unicode support
+* Thread safe
+* Re-usable contexts
+* Binary object is Python agnostic
+
+MiniRacer can be easily used by Django or Flask projects to minify assets, run
+babel or compile CoffeeScript.
+
+Examples
+--------
+
+py_mini_racer is straightforward to use:
+
+.. code-block:: python
+
+    >>> from py_mini_racer import py_mini_racer
+    >>> ctx = py_mini_racer.MiniRacer()
+    >>> ctx.eval('1+1')
+    2
+    >>> ctx.eval("var x = {company: 'Sqreen'}; x.company")
+    u'Sqreen'
+    >>> print ctx.eval(u"'\N{HEAVY BLACK HEART}'")
+    ❤
+    >>> ctx.eval("var fun = () => ({ foo: 1 });")
+    >>> ctx.call("fun")
+    {u'foo': 1}
+
+Variables are kept inside of a context:
+
+.. code-block:: python
+
+    >>> ctx.eval("x.company")
+    u'Sqreen'
+
+
+You can give directly a custom JSON encoder when sending non-JSON encodable
+parameters:
+
+.. code-block:: python
+
+    import json
+
+    from datetime import datetime
+
+    class CustomEncoder(json.JSONEncoder):
+
+            def default(self, obj):
+                if isinstance(obj, datetime):
+                    return obj.isoformat()
+
+                return json.JSONEncoder.default(self, obj)
+
+
+.. code-block:: python
+
+    >>> ctx.eval("var f = function(args) { return args; }")
+    >>> ctx.call("f", datetime.now(), encoder=CustomEncoder)
+    u'2017-03-31T16:51:02.474118'
+
+
+PyMiniRacer is ES6 capable:
+
+.. code-block:: python
+
+    >>> ctx.eval("[1,2,3].includes(5)")
+    False
+
+V8 heap information can be retrieved:
+
+.. code-block:: python
+
+    >>> ctx.heap_stats()
+    {u'total_physical_size': 1613896,
+     u'used_heap_size': 1512520,
+     u'total_heap_size': 3997696,
+     u'total_heap_size_executable': 3145728,
+     u'heap_size_limit': 1501560832}
+
+
+Compatibility
+-------------
+
+PyMiniRacer is compatible with Python 2 and Python 3. Wheels are generated for python 2.7 and python 3.4 to python 3.8.
+
+Binary builds availability
+--------------------------
+
+The PyMiniRacer binary builds have been tested on x86_64 with:
+
+* macOS >= 10.13
+* Ubuntu >= 16.04
+* Debian >= 9
+* CentOS >= 7
+* Alpine >= 3.11
+* Windows 10
+
+You need pip >= 8.1 to install the wheels - you can check and upgrade yours in this way:
+
+.. code-block:: bash
+
+    $ pip --version
+    $ pip install --upgrade pip
+
+It should work on any Linux with a libc >= 2.12 and a wheel compatible pip (>= 8.1).
+If you're running Alpine Linux, you may need to install required dependencies manually using the following command:
+
+.. code-block:: bash
+
+    $ apk add libgcc libstdc++
+
+If you have a up-to-date pip and it doesn't use a wheel, you might have an environment for which no wheel is built. Please open an issue.
+
+Installation
+------------
+
+We built Python wheels (prebuilt binaries) for macOS 64 bits, Linux 64 bits and Windows 64 bits. You need pip >= 1.4 and setuptools >= 0.8.
+
+.. code:: bash
+
+    $ pip install py-mini-racer
+
+Build
+-----
+
+First check that your current Python executable is version 2.7. This is required
+by the V8 build system.
+
+.. code:: bash
+
+    $ python --version
+    Python 2.7.16
+
+You can build the extension with the following command:
+
+.. code:: bash
+
+    $ python helpers/v8_build.py
+
+You can generate a wheel for whatever Python version with the command:
+
+.. code:: bash
+
+    $ python3 helpers/build_package.py wheel dist
+
+It will then build V8, the extension, and generates a wheel for your current
+Python version. The V8 builds are cached in the ``py_mini_racer/extension/v8/``
+directory.
+
+Notes for building on macOS
+'''''''''''''''''''''''''''
+
+The legacy Python binary builds (OSX 10.6) need to be downloaded from:
+    https://www.python.org/downloads/
+
+They will allow to build a wheel compatible with former OSX versions.
+
+Tests
+-----
+
+If you want to run the tests, you need to build the extension first, first install pytest:
+
+.. code-block:: bash
+
+    $ python -m pip install pytest
+
+Then launch:
+
+.. code:: bash
+
+    $ python -m pytest tests
+
+Credits
+-------
+
+Built with love by Sqreen_.
+
+.. _Sqreen: https://www.sqreen.io
+
+PyMiniRacer launch was described in `this blog post`_.
+
+.. _`this blog post`: https://blog.sqreen.io/embedding-javascript-into-python/
+
+PyMiniRacer is inspired by mini_racer_, built for the Ruby world by Sam Saffron.
+
+.. _`mini_racer`: https://github.com/SamSaffron/mini_racer
+
+Tools used in rendering this package:
+
+*  Cookiecutter_
+*  `cookiecutter-pypackage`_
+
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _`cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+
+
+
+
+History
+-------
+
+0.5.0 (2020-02-25)
+--------------------
+
+* Update V8 to 8.8
+
+0.4.0 (2020-09-22)
+------------------
+
+* Universal wheels for Linux, Mac and Windows
+* Fallback to source package for Alpine Linux
+
+0.3.0 (2020-06-29)
+------------------
+
+* Introduce a strict mode
+* Fix array conversion when size changes dynamically (CVE-2020-25489)
+
+0.2.0 (2020-03-11)
+------------------
+
+* Support for Alpine Linux
+* Avoid pip private modules in setup.py
+
+0.2.0b1 (2020-01-09)
+--------------------
+
+* Support for Windows 64 bits
+* Support for Python 3.8
+* Upgrade V8 to 7.8
+* Support soft memory limits
+
+0.1.18 (2019-01-04)
+---------------------
+
+* Support memory and time limits
+
+0.1.17 (2018-19-12)
+---------------------
+
+* Upgrade libv8
+* Fix a memory leak
+
+0.1.16 (2018-07-11)
+---------------------
+
+* Add wheel for Python without PyMalloc
+
+0.1.15 (2018-06-18)
+---------------------
+
+* Add wheel for Python 3.7
+
+
+0.1.14 (2018-05-25)
+---------------------
+
+* Add support for pip 10
+* Update package metadata
+
+0.1.13 (2018-03-15)
+---------------------
+
+* Add heap_stats function
+* Fix issue with returned strings containing null bytes
+
+0.1.12 (2018-17-04)
+---------------------
+
+* Remove dependency to enum
+
+0.1.11 (2017-07-11)
+---------------------
+
+* Add compatibility for centos6
+
+0.1.10 (2017-03-31)
+---------------------
+
+* Add the possibility to pass a custom JSON encoder in call.
+
+0.1.9 (2017-03-24)
+---------------------
+
+* Fix the compilation for Ubuntu 12.04 and glibc < 2.17.
+
+0.1.8 (2017-03-02)
+---------------------
+
+* Update targets build for better compatibility with old Mac OS X and linux platforms.
+
+0.1.7 (2016-10-04)
+---------------------
+
+* Improve general performances of the JS execution.
+* Add the possibility to build a different version of V8 (for example with debug symbols).
+* Fix a conflict that could happens between statically linked libraries and dynamic ones.
+
+0.1.6 (2016-08-12)
+---------------------
+
+* Add error message when py_mini_racer sdist fails to build asking to update pip in order to download the pre-compiled wheel instead of the source distribution.
+
+0.1.5 (2016-08-04)
+---------------------
+
+* Build py_mini_racer against a static Python. When built against a shared library python, it doesn't work with a static Python.
+
+0.1.4 (2016-08-04)
+---------------------
+
+* Ensure JSEvalException message is converted to unicode
+
+0.1.3 (2016-08-04)
+---------------------
+
+* Fix extension loading for python3
+* Add a make target for building distributions (sdist + wheels)
+* Fix eval conversion for python 3
+
+0.1.2 (2016-08-03)
+---------------------
+
+* Fix date support
+* Fix Dockerfile for generating python3 wheels
+
+
+0.1.1 (2016-08-02)
+---------------------
+
+* Fix sdist distribution.
+
+
+0.1.0 (2016-08-01)
+---------------------
+
+* First release on PyPI.
+
+
