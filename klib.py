@@ -15,6 +15,9 @@ except ModuleNotFoundError:
 import asyncio
 from difflib import SequenceMatcher
 
+allowedTypes = ['quiz', 'multiple_select_quiz']
+DEFAULT_ANSWER = 1
+
 
 class Kahoot:
 	def __init__(self, pin=None, nickname=None, quizName=None, quizID=None, maxCount=None, DEBUG=None):
@@ -41,14 +44,6 @@ class Kahoot:
 
 	def gracefulExit(self):
 		exit()
-
-	def _check_auth(f):
-		def wrapper(self, *args, **kwargs):
-			if not self.authToken:
-				self.error('You must be authenticated to use this method.')
-			return f(self, *args, **kwargs)
-
-		return wrapper
 
 	def authenticate(self, email, password):
 		url = 'https://create.kahoot.it/rest/authenticate'
@@ -101,25 +96,27 @@ class Kahoot:
 						tFADone = True
 					if kind == 'RESET_TWO_FACTOR_AUTH' and not tFADone:
 						await self.submit2FA()
+					elif kind != 'RESET_TWO_FACTOR_AUTH':
+						print(kind.replace('_', ' '))
 					if kind == 'START_QUIZ':
 						if self.DEBUG:
 							print(data)
 						quizAnswers = data['quizQuestionAnswers']
 						if not self.answers:
-							self.answers = await self.findAnswers(exceptedAnswers=quizAnswers)
+							self.answers = await self.findAnswers(accepted_answers=quizAnswers)
 							if self.answers:
 								print(f'ANSWERS RECEIVED')
 					elif kind == 'START_QUESTION':
 						print('------', data['questionIndex'] + 1, '------')
-						if data['gameBlockType'] != 'quiz':
+						if data['gameBlockType'] not in allowedTypes:
 							pass
-						elif self.answers:
+						if self.answers:
 							correct = self.answers[data['questionIndex'] + offset]['index']
-							print(f'SELECTED {self.colors[correct]}')
-							await self.sendAnswer(correct)
+							print(f'SELECTED {self.colors[int(correct)]}')
 						else:
+							correct = DEFAULT_ANSWER
 							print('SELECTED FALLBACK')
-							await self.sendAnswer(1)
+						await self.sendAnswer(int(correct))
 					elif kind == 'TIME_UP':
 						# print('DID NOT ANSWER IN TIME, SKIPPING TO NEXT ANSWER')
 						# offset += 1
@@ -128,10 +125,8 @@ class Kahoot:
 						print("RESET_CONTROLLER")
 						self.gracefulExit()
 					elif kind == 'GAME_OVER':
-						print("Game over, if you didn't win the winner is hacking!")
+						print("Game over, if you didn't win the winner has a better bot!")
 						self.gracefulExit()
-					if not (tFADone and kind == 'RESET_TWO_FACTOR_AUTH'):
-						print(kind.replace('_', ' '))
 
 	def convert(self, cols):
 		for num, color in self.colors.items():
@@ -153,7 +148,7 @@ class Kahoot:
 		                          {"content": choiceInfo, "gameid": self.pin, "host": "kahoot.it", "type": "message",
 		                           "id": 45})
 
-	async def getQuiz(self, url, exceptedAnswers=None, actualAnswers=None, searchOnly=None):
+	async def getQuiz(self, url, accepted_answers=None, actualAnswers=None, searchOnly=None):
 		if self.DEBUG:
 			print(url)
 		if self.authToken:
@@ -164,11 +159,11 @@ class Kahoot:
 			self.error("Invalid UUID.")
 		if resp.status_code != 200:
 			self.error("Something went wrong finding answers.")
-		if exceptedAnswers and actualAnswers:
-			if actualAnswers == len(exceptedAnswers):
+		if accepted_answers and actualAnswers:
+			if actualAnswers == len(accepted_answers):
 				isCorrectQuiz = True
 				for q_index, question in enumerate(resp.json()['questions']):
-					if len(question['choices']) != exceptedAnswers[q_index]:
+					if len(question['choices']) != accepted_answers[q_index]:
 						isCorrectQuiz = False
 						break
 				if isCorrectQuiz:
@@ -177,15 +172,15 @@ class Kahoot:
 				else:
 					print("Wrong question types")
 			else:
-				print("Wrong num of expected answers")
+				print("Wrong num of accepted answers")
 		else:
-			print("Here you go:" if searchOnly else "No excepted answers")
+			print("Here you go:" if searchOnly else "No accepted answers")
 			return resp.json()
 
-	async def findAnswers(self, exceptedAnswers=None, searchOnly=None):
+	async def findAnswers(self, accepted_answers=None, searchOnly=None):
 		if self.quizID:
 			url = f'https://create.kahoot.it/rest/kahoots/{self.quizID}'
-			return self.parseAnswers(await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers), self.DEBUG)
+			return self.parseAnswers(await self.getQuiz(url=url, accepted_answers=accepted_answers), self.DEBUG)
 		elif self.quizName:
 			url = 'https://create.kahoot.it/rest/kahoots/'
 			params = {'query': self.quizName, 'cursor': 0, 'limit': self.maxCount, 'topics': '', 'grades': '',
@@ -200,6 +195,7 @@ class Kahoot:
 				self.error("Something went wrong searching quizzes.")
 			quizzes = resp.json()['entities']
 			print(f'{len(quizzes)} matching quizzes found')
+			quiz = None
 			for q in quizzes:
 				if searchOnly:
 					if not re.match(r'y(es)?', input(f"Check '{q['card']['title']}'? [y/N] ").lower()):
@@ -207,7 +203,7 @@ class Kahoot:
 				else:
 					print(f"Checking {q['card']['title']}...", end=" ")
 				url = f'https://create.kahoot.it/rest/kahoots/{q["card"]["uuid"]}'
-				quiz = await self.getQuiz(url=url, exceptedAnswers=exceptedAnswers,
+				quiz = await self.getQuiz(url=url, accepted_answers=accepted_answers,
 				                          actualAnswers=q['card']['number_of_questions'], searchOnly=searchOnly)
 				if searchOnly:
 					self.parseAnswers(quiz, self.DEBUG)
@@ -223,8 +219,8 @@ class Kahoot:
 			print(quiz)
 		for question in quiz['questions']:
 			foundAnswer = False
-			if question['type'] != 'quiz':
-				answers.append({'NOT A': 'QUESTION'})
+			if question['type'] not in allowedTypes:
+				answers.append({'question': 'NOT A QUESTION'})
 				continue
 			for i, choice in enumerate(question['choices']):
 				if choice['correct'] and not foundAnswer:

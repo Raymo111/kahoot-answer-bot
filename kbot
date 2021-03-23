@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import asyncio
 
 import klib
 import re
@@ -99,6 +100,6 @@ if __name__ == "__main__":
 		else:
 			user.checkPin()
 			user.startGame()
-	except KeyboardInterrupt:
+	except (KeyboardInterrupt, asyncio.exceptions.CancelledError):
 		print("\nBYE!")
 		exit()
