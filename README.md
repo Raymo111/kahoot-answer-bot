@@ -61,9 +61,6 @@ Does not work when:
 
 This is because this program uses the original question order and answer order, so if these are randomized the wrong answer will be clicked.
 
-## TODO
-- Print answers after each question in case of randomization
-
 ## Contributors
 * [Raymo111](https://github.com/Raymo111) - Fixing it, adding 2FA and search by ID
 * [reteps](https://github.com/reteps) - Main programming
