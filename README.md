@@ -11,16 +11,33 @@ The program intercepts and pretends to be a kahoot client. After receiving quiz 
 ## Installation
 - [ ] Optional: Make a Kahoot Account if you don't have the Kahoot's ID and want to search for a Kahoot by name
 - [ ] Install Python3
-  - On Windows, visit https://www.python.org/downloads/windows/
-  - On MacOS, Install [Homebrew](https://brew.sh/), then install Python.
-    - `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-    - `brew install python`
-  - You probably have (or know how to install) python if you're on Linux. If not, good luck.
+	
+  On Windows visit `https://www.python.org/downloads/windows/`
+	- Click latest Python 3 release
+	- Scroll down to the bottom to the section titled "Files"
+	- Click the Windows Installer (64-bit) link to download the ".exe"
+	- In File Explorer right click the file and click "Run as Administrator"
+	- Check the boxes "Install launcher for all users (recommended)" and "Install Python 3.X to path"
+	
+	On macOS 11+ (Intel) and macOS 11+ (Apple Sillicon) visit "`https://www.python.org/downloads/macos/`"
+	- Click latest Python 3 release
+	- Scroll down to the bottom to the section titled "Files"
+	- Click the macOS 64-bit universal2 installer link to download the ".pkg"
+	- Run the downloaded ".pkg"
+	
+    On Debian GNU/Linux 11+ based distros:
+    - `sudo apt install python3 python3-pip`
+
+   On Arch Linux based distros run:
+	- `sudo pacman -S python python-pip`
+
+   On other Linux based distros install python3 (python) and python3-pip (python-pip) from your package manager
+   
 - [ ] Download and unzip or clone this repo
-  - https://github.com/Raymo111/kahoot-answer-bot/archive/master.zip
-  - `git clone https://github.com/Raymo111/kahoot-answer-bot.git`
+	- https://github.com/Raymo111/kahoot-answer-bot/archive/master.zip
+	- `git clone https://github.com/Raymo111/kahoot-answer-bot.git`
 - [ ] Install Dependencies
-  - `python3 -m pip install -r requirements.txt`
+	- `python3 -m pip install -r requirements.txt`
 
 ## Usage
 Open a terminal (Command Prompt on Windows) and navigate to the directory (folder) containing kbot. Then use the following command, replacing `[options]` with any options you want to use (listed below).
