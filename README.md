@@ -26,7 +26,7 @@ The program intercepts and pretends to be a kahoot client. After receiving quiz 
 	- Run the downloaded ".pkg"
 	
     On Debian GNU/Linux 11+ based distros:
-    - `sudo apt update
+    - `sudo apt update`
     - `sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libsqlite3-dev libreadline-dev libffi-dev curl libbz2-dev`
     - `wget https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz`
     - `tar -xf Python-3.9.7.tgz`
