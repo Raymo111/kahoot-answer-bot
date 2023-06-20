@@ -1,3 +1,4 @@
 requests>=2.20.0
-aiocometd>=0.4.5
+### aiocometd == 0.4.5 ### disable
+aiocometd @ git+https://github.com/random-python/x_aiocometd@develop ### enalbe ###
 py_mini_racer>=0.1.18
