@@ -32,17 +32,22 @@ The program intercepts and pretends to be a kahoot client. After receiving quiz 
     - `tar -xf Python-3.9.7.tgz`
     - `cd Python-3.9.7`
     - `./configure --enable-optimizations`
-    - `make -j 2`
+    - `make`
     - `sudo make altinstall`
 
    On Arch Linux based distros run:
-	- https://bbs.archlinux.org/viewtopic.php?id=272108
+	- `sudo pacman -S --needed base-devel git`
+ 	- `git clone https://aur.archlinux.org/python39.git`
+  	- `cd python39`
+  	- `makepkg -si`
    
 - [ ] Download and unzip or clone this repo
 	- https://github.com/Raymo111/kahoot-answer-bot/archive/master.zip
 	- `git clone https://github.com/Raymo111/kahoot-answer-bot.git`
 - [ ] Install Dependencies
 	- `python3.9 -m pip install -r requirements.txt`
+ 
+On other Linux based distros install python3.9 from your package manager.
 
 ## Usage
 Open a terminal (Command Prompt on Windows) and navigate to the directory (folder) containing kbot. Then use the following command, replacing `[options]` with any options you want to use (listed below).
