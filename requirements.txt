@@ -1,5 +1,4 @@
 requests>=2.20.0
-### aiocometd == 0.4.5 ### disable
-aiocometd @ git+https://github.com/random-python/x_aiocometd@develop ### enalbe ###
+### aiocometd @ git+https://github.com/random-python/x_aiocometd@develop ### fixes asyncio errors, optional
 py_mini_racer=0.6.0
 colorama=0.4.6
