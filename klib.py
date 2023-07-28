@@ -108,7 +108,7 @@ class Kahoot:
 								print(f'ANSWERS RECEIVED')
 					elif kind == 'START_QUESTION':
 						print('------', data['questionIndex'] + 1, '------')
-						if data['gameBlockType'] not in allowedTypes:
+						if data['type'] not in allowedTypes:
 							pass
 						if self.answers:
 							correct = self.answers[data['questionIndex'] + offset]['index']
@@ -236,7 +236,8 @@ class Kahoot:
 		print(f"Creator: {quiz['creator_username']}")
 		print(f"Desc: {quiz['description']}")
 		for q in answers:
-			print(f"{q['question']}\n\t{q['answer']}")
+			if not q['question'] == 'NOT A QUESTION':
+				print(f"{q['question']}\n\t{q['answer']}")
 
 	@staticmethod
 	def _remove_emojis(text):
