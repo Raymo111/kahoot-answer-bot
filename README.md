@@ -52,7 +52,7 @@ On other Linux based distros install python3.9 from your package manager.
 ## Usage
 Open a terminal (Command Prompt on Windows) and navigate to the directory (folder) containing kbot. Then use the following command, replacing `[options]` with any options you want to use (listed below).
 ```
-python3.9 kbot [options]
+python kbot [options]
 ```
 ```
 -e, --email
