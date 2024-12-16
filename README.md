@@ -77,7 +77,7 @@ The quiz's name
 The quiz's ID
 
 -d, --debug
-Output go brrrrrrrrrrrrr
+Output go print("brrrrrrrrrrrrr") # ;)
 ```
 
 ## Caveats
